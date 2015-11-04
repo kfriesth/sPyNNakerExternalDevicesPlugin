@@ -30,6 +30,12 @@ static uint32_t continue_if_not_different;
 static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 
+
+//! values for the priority for each callback
+typedef enum callback_priorities{
+    MC = -1, SDP = 1, TIMER = 2
+}callback_priorities;
+
 static inline void send(uint32_t direction, uint32_t speed) {
     uint32_t direction_key = direction | key;
     while (!spin1_send_mc_packet(direction_key, speed, WITH_PAYLOAD)) {
@@ -97,8 +103,7 @@ void timer_callback(uint unused0, uint unused1) {
 
     if ((infinite_run != TRUE) && (time == simulation_ticks)) {
         log_info("Simulation complete.\n");
-        spin1_exit(0);
-        return;
+        simulation_handle_pause_resume(timer_callback, TIMER);
     }
 
     // Process the incoming spikes
@@ -218,8 +223,9 @@ void c_main(void) {
     spin1_set_timer_tick(timer_period);
 
     // Register callbacks
-    spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, -1);
-    spin1_callback_on(TIMER_TICK, timer_callback, 2);
+    spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, MC);
+    spin1_callback_on(TIMER_TICK, timer_callback, TIMER);
+    simulation_register_simulation_sdp_callback(simulation_ticks, SDP);
 
     log_info("Starting");
 
