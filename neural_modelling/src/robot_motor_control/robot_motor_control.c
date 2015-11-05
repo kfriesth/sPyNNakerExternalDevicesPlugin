@@ -33,7 +33,7 @@ static uint32_t infinite_run;
 
 //! values for the priority for each callback
 typedef enum callback_priorities{
-    MC = -1, SDP = 1, TIMER = 2
+    MC = -1, SDP = 0, TIMER = 2
 }callback_priorities;
 
 static inline void send(uint32_t direction, uint32_t speed) {
