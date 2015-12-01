@@ -21,6 +21,8 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             self, port=port, label=label,
             n_neurons=n_neurons, machine_time_step=machine_time_step,
             timescale_factor=timescale_factor, virtual_key=virtual_key)
+        # bool for if state has changed.
+        self._change_requires_mapping = True
 
     def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
         constraints = ReverseIpTagMultiCastSource\
@@ -28,3 +30,20 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
                 self, partitioned_edge, graph_mapper)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints
+
+    @property
+    def change_requires_mapping(self):
+        """
+        property for checking if someting has changed
+        :return:
+        """
+        return self._change_requires_mapping
+
+    @change_requires_mapping.setter
+    def change_requires_mapping(self, new_value):
+        """
+        setter for the changed property
+        :param new_value: the new state to change it to
+        :return:
+        """
+        self._change_requires_mapping = new_value
