@@ -8,6 +8,8 @@ from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_contiguous_range_constraint \
     import KeyAllocatorContiguousRangeContraint
 
+from spynnaker.pyNN.utilities.conf import config
+
 
 class SpikeInjector(ReverseIpTagMultiCastSource,
                     AbstractProvidesOutgoingEdgeConstraints):
@@ -30,6 +32,15 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
                 self, partitioned_edge, graph_mapper)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints
+
+    def get_number_of_mallocs_used_by_dsg(self, vertex_slice, in_edges):
+        mallocs = \
+            ReverseIpTagMultiCastSource.get_number_of_mallocs_used_by_dsg(
+                self, vertex_slice, in_edges)
+        if config.getboolean("SpecExecution", "specExecOnHost"):
+            return 1
+        else:
+            return mallocs
 
     @property
     def change_requires_mapping(self):
