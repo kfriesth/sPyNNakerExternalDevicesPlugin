@@ -1,5 +1,12 @@
+from spinnman.connections.udp_packet_connections.udp_connection \
+    import UDPConnection
 from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
+
+import math
+import decimal
+import struct
+import time
 
 
 # The maximum number of 32-bit keys that will fit in a packet
@@ -11,11 +18,12 @@ _MAX_HALF_KEYS_PER_PACKET = 127
 
 class SpynnakerLiveSpikesConnection(LiveEventConnection):
     """ A connection for receiving and sending live spikes from and to\
-        SpiNNaker
+        SpiNNaker and for updating Poisson rates
     """
 
-    def __init__(self, receive_labels=None, send_labels=None, local_host=None,
-                 local_port=19999):
+    def __init__(
+            self, receive_labels=None, send_labels=None, poisson_labels=None,
+            local_host=None, local_port=19999):
         """
 
         :param receive_labels: Labels of population from which live spikes\
@@ -24,6 +32,9 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
         :param send_labels: Labels of population to which live spikes will be\
                     sent
         :type send_labels: iterable of str
+        :param poisson_labels: Labels of poisson sources to which live rate\
+                    updates will be sent
+        :type poisson_labels: iterable of str
         :param local_host: Optional specification of the local hostname or\
                     ip address of the interface to listen on
         :type local_host: str
@@ -37,6 +48,77 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
         LiveEventConnection.__init__(
             self, "LiveSpikeReceiver", receive_labels, send_labels,
             local_host, local_port)
+        self._poisson_labels = poisson_labels
+        self._poisson_sender = None
+        self._poisson_address_details = dict()
+        self._machine_time_step = None
+
+        if self._poisson_labels is not None:
+            for poisson_label in self._poisson_labels:
+                self._init_callbacks[poisson_label] = list()
+                self._start_callbacks[poisson_label] = list()
+
+    def _read_database_callback(self, database_reader):
+        LiveEventConnection._read_database_callback(self, database_reader)
+        if self._poisson_labels is not None:
+            if self._poisson_sender is None:
+                self._poisson_sender = UDPConnection()
+            for poisson_label in self._poisson_labels:
+                ip_address, port = database_reader.get_live_input_details(
+                    poisson_label)
+                self._poisson_address_details[poisson_label] = (
+                    ip_address, port)
+        self._machine_time_step = \
+            database_reader.get_configuration_parameter_value(
+                "machine_time_step") / 1000.0
+
+    def set_poisson_rate(self, label, neuron_id, rate):
+        self.set_poisson_rates(label, {neuron_id: rate})
+
+    def _send_poisson_rate_data(self, label, rate_data):
+        (ip_address, port) = self._poisson_address_details[label]
+        self._poisson_sender.send_to(rate_data, (ip_address, port))
+        time.sleep(0.1)
+
+    def set_poisson_rates(self, label, rates_for_ids):
+        data_size = 0
+        rate_data = b""
+        for (neuron_id, rate) in rates_for_ids.iteritems():
+            if data_size >= 256:
+                self._send_poisson_rate_data(label, rate_data)
+                data_size = 0
+                rate_data = b""
+
+            # Work out the data to be sent to update the source
+            spikes_per_tick = (
+                float(rate) * (self._machine_time_step / 1000000.0))
+            if spikes_per_tick == 0:
+                exp_minus_lamda = 0
+            else:
+                exp_minus_lamda = math.exp(-1.0 * spikes_per_tick)
+            exp_minus_lambda = (
+                decimal.Decimal("{}".format(exp_minus_lamda)) *
+                decimal.Decimal("4294967296"))
+
+            is_fast_source = 1
+            if spikes_per_tick <= 0.25:
+                is_fast_source = 0
+
+            if rate == 0.0:
+                isi_val = 0.0
+            else:
+                isi_val = float(
+                    1000000.0 / (float(rate) * self._machine_time_step))
+            isi_val = (
+                decimal.Decimal("{}".format(isi_val)) *
+                decimal.Decimal("32768"))
+
+            # Get the data and add it to the packet
+            rate_data += struct.pack(
+                "<IIIi", neuron_id, is_fast_source, exp_minus_lambda, isi_val)
+
+        if data_size > 0:
+            self._send_poisson_rate_data(label, rate_data)
 
     def send_spike(self, label, neuron_id, send_full_keys=False):
         """ Send a spike from a single neuron
