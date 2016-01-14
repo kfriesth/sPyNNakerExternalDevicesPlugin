@@ -70,24 +70,27 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
                     ip_address, port)
         self._machine_time_step = \
             database_reader.get_configuration_parameter_value(
-                "machine_time_step") / 1000.0
+                "machine_time_step")
 
     def set_poisson_rate(self, label, neuron_id, rate):
         self.set_poisson_rates(label, {neuron_id: rate})
 
-    def _send_poisson_rate_data(self, label, rate_data):
+    def _send_poisson_rate_data(self, label, n_items, rate_data):
         (ip_address, port) = self._poisson_address_details[label]
+        rate_data = struct.pack("<I", n_items) + rate_data
         self._poisson_sender.send_to(rate_data, (ip_address, port))
         time.sleep(0.1)
 
     def set_poisson_rates(self, label, rates_for_ids):
         data_size = 0
+        n_items = 0
         rate_data = b""
         for (neuron_id, rate) in rates_for_ids.iteritems():
             if data_size >= 256:
-                self._send_poisson_rate_data(label, rate_data)
+                self._send_poisson_rate_data(label, n_items, rate_data)
                 data_size = 0
                 rate_data = b""
+                n_items = 0
 
             # Work out the data to be sent to update the source
             spikes_per_tick = (
@@ -116,9 +119,11 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
             # Get the data and add it to the packet
             rate_data += struct.pack(
                 "<IIIi", neuron_id, is_fast_source, exp_minus_lambda, isi_val)
+            data_size += 16
+            n_items += 1
 
         if data_size > 0:
-            self._send_poisson_rate_data(label, rate_data)
+            self._send_poisson_rate_data(label, n_items, rate_data)
 
     def send_spike(self, label, neuron_id, send_full_keys=False):
         """ Send a spike from a single neuron
