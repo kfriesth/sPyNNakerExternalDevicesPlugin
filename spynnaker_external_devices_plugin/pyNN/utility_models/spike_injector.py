@@ -41,20 +41,3 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             return 1
         else:
             return mallocs
-
-    @property
-    def change_requires_mapping(self):
-        """
-        property for checking if someting has changed
-        :return:
-        """
-        return self._change_requires_mapping
-
-    @change_requires_mapping.setter
-    def change_requires_mapping(self, new_value):
-        """
-        setter for the changed property
-        :param new_value: the new state to change it to
-        :return:
-        """
-        self._change_requires_mapping = new_value

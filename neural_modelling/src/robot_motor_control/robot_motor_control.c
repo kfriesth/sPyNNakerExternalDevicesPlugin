@@ -34,7 +34,7 @@ static uint32_t infinite_run;
 //! values for the priority for each callback
 typedef enum callback_priorities{
     MC = -1, SDP = 0, TIMER = 2
-}callback_priorities;
+} callback_priorities;
 
 static inline void send(uint32_t direction, uint32_t speed) {
     uint32_t direction_key = direction | key;
@@ -214,7 +214,7 @@ void c_main(void) {
         return;
     }
 
-    // Initialize the incoming spike buffer
+    // Initialise the incoming spike buffer
     if (!in_spikes_initialize_spike_buffer(8192)) {
         return;
     }
@@ -225,7 +225,8 @@ void c_main(void) {
     // Register callbacks
     spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, MC);
     spin1_callback_on(TIMER_TICK, timer_callback, TIMER);
-    simulation_register_simulation_sdp_callback(simulation_ticks, SDP);
+    simulation_register_simulation_sdp_callback(
+        &simulation_ticks, &infinite_run, SDP);
 
     log_info("Starting");
 
