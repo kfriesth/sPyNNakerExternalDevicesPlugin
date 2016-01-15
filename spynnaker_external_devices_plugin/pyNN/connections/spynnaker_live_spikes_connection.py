@@ -3,8 +3,6 @@ from spinnman.connections.udp_packet_connections.udp_connection \
 from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
 
-import math
-import decimal
 import struct
 import time
 
@@ -92,34 +90,10 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
                 rate_data = b""
                 n_items = 0
 
-            # Work out the data to be sent to update the source
-            spikes_per_tick = (
-                float(rate) * (self._machine_time_step / 1000000.0))
-            if spikes_per_tick == 0:
-                exp_minus_lamda = 0
-            else:
-                exp_minus_lamda = math.exp(-1.0 * spikes_per_tick)
-            exp_minus_lambda = (
-                decimal.Decimal("{}".format(exp_minus_lamda)) *
-                decimal.Decimal("4294967296"))
-
-            is_fast_source = 1
-            if spikes_per_tick <= 0.25:
-                is_fast_source = 0
-
-            if rate == 0.0:
-                isi_val = 0.0
-            else:
-                isi_val = float(
-                    1000000.0 / (float(rate) * self._machine_time_step))
-            isi_val = (
-                decimal.Decimal("{}".format(isi_val)) *
-                decimal.Decimal("32768"))
-
             # Get the data and add it to the packet
-            rate_data += struct.pack(
-                "<IIIi", neuron_id, is_fast_source, exp_minus_lambda, isi_val)
-            data_size += 16
+            rate_val = int(round(float(rate) * 32768.0))
+            rate_data += struct.pack("<Ii", neuron_id, rate_val)
+            data_size += 8
             n_items += 1
 
         if data_size > 0:
