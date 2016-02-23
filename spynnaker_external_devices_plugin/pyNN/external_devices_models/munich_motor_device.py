@@ -50,7 +50,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
                         AbstractPartitionableVertex,
                         AbstractVertexWithEdgeToDependentVertices,
                         AbstractProvidesOutgoingEdgeConstraints):
-    """ An omnibot motor control device - has a real vertex and an external\
+    """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
 
