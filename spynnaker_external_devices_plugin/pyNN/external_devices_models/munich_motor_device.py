@@ -173,7 +173,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
     def model_name(self):
         return "Munich Motor Control"
 
-    def get_sdram_usage_for_atoms(self, vertex_slice, graph):
+    def get_static_sdram_usage_for_atoms(self, vertex_slice, graph):
         return self.SYSTEM_SIZE + self.PARAMS_SIZE
 
     def get_dtcm_usage_for_atoms(self, vertex_slice, graph):
