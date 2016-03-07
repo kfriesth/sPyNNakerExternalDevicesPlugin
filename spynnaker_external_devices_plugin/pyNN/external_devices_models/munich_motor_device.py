@@ -50,7 +50,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
                         AbstractPartitionableVertex,
                         AbstractVertexWithEdgeToDependentVertices,
                         AbstractProvidesOutgoingPartitionConstraints):
-    """ An omnibot motor control device - has a real vertex and an external\
+    """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
 
@@ -147,7 +147,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         spec.end_specification()
         data_writer.close()
 
-        return [data_writer.filename]
+        return data_writer.filename
 
     # inherited from data specable vertex
     def get_binary_file_name(self):
