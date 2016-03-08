@@ -1,6 +1,6 @@
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
@@ -30,7 +30,7 @@ def get_spike_value_from_robot_retina(key):
 
 class MunichRetinaDevice(
         AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
-        AbstractProvidesOutgoingEdgeConstraints):
+        AbstractProvidesOutgoingPartitionConstraints):
 
     # key codes for the robot retina
     MANAGEMENT_BIT = 0x400
@@ -76,6 +76,7 @@ class MunichRetinaDevice(
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(
             self, self._get_commands(position))
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         self._polarity = polarity
         self._position = position
@@ -89,7 +90,7 @@ class MunichRetinaDevice(
             print "Warning, the retina will have {} neurons".format(
                 fixed_n_neurons)
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition, graph_mapper):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
 
