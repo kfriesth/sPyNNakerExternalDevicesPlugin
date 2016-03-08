@@ -103,7 +103,7 @@ void timer_callback(uint unused0, uint unused1) {
 
     if ((infinite_run != TRUE) && (time == simulation_ticks)) {
         log_info("Simulation complete.\n");
-        simulation_handle_pause_resume(timer_callback, TIMER);
+        simulation_handle_pause_resume();
     }
 
     // Process the incoming spikes
@@ -178,7 +178,7 @@ void incoming_spike_callback(uint key, uint payload) {
 }
 
 static bool initialize(uint32_t *timer_period) {
-    log_info("initialize: started");
+    log_info("initialise: started");
 
     // Get the address this core's DTCM data starts at from SRAM
     address_t address = data_specification_get_data_address();
@@ -191,15 +191,14 @@ static bool initialize(uint32_t *timer_period) {
     // Get the timing details
     if (!simulation_read_timing_details(
             data_specification_get_region(0, address),
-            APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run)) {
+            APPLICATION_NAME_HASH, timer_period)) {
         return false;
     }
 
     // Get the parameters
     read_parameters(data_specification_get_region(1, address));
 
-    log_info("initialize: completed successfully");
+    log_info("initialise: completed successfully");
 
     return true;
 }
@@ -228,9 +227,7 @@ void c_main(void) {
     simulation_register_simulation_sdp_callback(
         &simulation_ticks, &infinite_run, SDP);
 
-    log_info("Starting");
-
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
-    simulation_run();
+    simulation_run(timer_callback, TIMER);
 }
