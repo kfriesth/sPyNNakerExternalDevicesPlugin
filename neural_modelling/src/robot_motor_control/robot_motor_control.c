@@ -103,7 +103,7 @@ void timer_callback(uint unused0, uint unused1) {
 
     if ((infinite_run != TRUE) && (time == simulation_ticks)) {
         log_info("Simulation complete.\n");
-        simulation_handle_pause_resume();
+        simulation_handle_pause_resume(NULL);
     }
 
     // Process the incoming spikes
