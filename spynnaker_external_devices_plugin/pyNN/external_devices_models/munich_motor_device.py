@@ -18,8 +18,8 @@ from pacman.model.partitionable_graph.abstract_partitionable_vertex \
 from spinn_front_end_common.abstract_models.abstract_data_specable_vertex\
     import AbstractDataSpecableVertex
 from spinn_front_end_common.abstract_models\
-    .abstract_provides_outgoing_edge_constraints\
-    import AbstractProvidesOutgoingEdgeConstraints
+    .abstract_provides_outgoing_partition_constraints\
+    import AbstractProvidesOutgoingPartitionConstraints
 
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
@@ -49,8 +49,8 @@ class _MunichMotorDevice(AbstractVirtualVertex):
 class MunichMotorDevice(AbstractDataSpecableVertex,
                         AbstractPartitionableVertex,
                         AbstractVertexWithEdgeToDependentVertices,
-                        AbstractProvidesOutgoingEdgeConstraints):
-    """ An omnibot motor control device - has a real vertex and an external\
+                        AbstractProvidesOutgoingPartitionConstraints):
+    """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
 
@@ -77,7 +77,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         AbstractPartitionableVertex.__init__(self, 6, label, 6, None)
         AbstractVertexWithEdgeToDependentVertices.__init__(
             self, [_MunichMotorDevice(spinnaker_link_id)], None)
-        AbstractProvidesOutgoingEdgeConstraints.__init__(self)
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         self._speed = speed
         self._sample_time = sample_time
@@ -86,17 +86,18 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         self._delta_threshold = delta_threshold
         self._continue_if_not_different = continue_if_not_different
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition, graph_mapper):
 
         # Any key to the device will work, as long as it doesn't set the
         # management bit.  We also need enough for the configuration bits
         # and the management bit anyway
         return list([KeyAllocatorFixedMaskConstraint(0xFFFFF800)])
 
-    def generate_data_spec(self, subvertex, placement, subgraph, graph,
-                           routing_info, hostname, graph_subgraph_mapper,
-                           report_folder, ip_tags, reverse_ip_tags,
-                           write_text_specs, application_run_time_folder):
+    def generate_data_spec(
+            self, subvertex, placement, partitioned_graph, graph,
+            routing_info, hostname, graph_subgraph_mapper,
+            report_folder, ip_tags, reverse_ip_tags,
+            write_text_specs, application_run_time_folder):
         """
         Model-specific construction of the data blocks necessary to build a
         single external retina device.
@@ -122,9 +123,11 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
             raise exceptions.SpynnakerException(
                 "This motor should only have one outgoing edge to the robot")
 
-        for subedge in subgraph.outgoing_subedges_from_subvertex(subvertex):
+        partitions = partitioned_graph.\
+            outgoing_edges_partitions_from_vertex(subvertex)
+        for partition in partitions.values():
             edge_keys_and_masks = \
-                routing_info.get_keys_and_masks_from_subedge(subedge)
+                routing_info.get_keys_and_masks_from_partition(partition)
             edge_key = edge_keys_and_masks[0].key
 
         # write params to memory
@@ -144,7 +147,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         spec.end_specification()
         data_writer.close()
 
-        return [data_writer.filename]
+        return data_writer.filename
 
     # inherited from data specable vertex
     def get_binary_file_name(self):

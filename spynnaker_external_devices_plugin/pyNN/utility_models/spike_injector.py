@@ -19,19 +19,18 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
 
     def __init__(
             self, n_neurons, machine_time_step, timescale_factor, label, port,
-
             virtual_key=None):
 
         ReverseIpTagMultiCastSource.__init__(
             self, n_keys=n_neurons, machine_time_step=machine_time_step,
             timescale_factor=timescale_factor, label=label, receive_port=port,
             virtual_key=virtual_key)
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
     def get_outgoing_partition_constraints(
-            self, partitioned_edge, graph_mapper):
+            self, partition, graph_mapper):
         constraints = ReverseIpTagMultiCastSource\
-            .get_outgoing_edge_constraints(
-                self, partitioned_edge, graph_mapper)
+            .get_outgoing_partition_constraints(self, partition, graph_mapper)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints
 
