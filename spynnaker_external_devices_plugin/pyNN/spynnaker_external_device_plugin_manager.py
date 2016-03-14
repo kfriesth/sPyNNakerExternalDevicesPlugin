@@ -48,14 +48,14 @@ class SpynnakerExternalDevicePluginManager(object):
                 payload_right_shift, number_of_packets_sent_per_time_step,
                 label="LiveSpikeReceiver")
             self._live_spike_recorders[(port, hostname)] = live_spike_recorder
-            _spinnaker.add_vertex(live_spike_recorder)
+            _spinnaker.add_partitionable_vertex(live_spike_recorder)
 
         # create the edge and add
         edge = MultiCastPartitionableEdge(
             vertex_to_record_from, live_spike_recorder, label="recorder_edge")
-        _spinnaker.add_edge(edge, PARTITION_ID)
+        _spinnaker.add_partitionable_edge(edge, PARTITION_ID)
 
     def add_edge(self, vertex, device_vertex):
         _spinnaker = get_spynnaker()
         edge = MultiCastPartitionableEdge(vertex, device_vertex)
-        _spinnaker.add_edge(edge)
+        _spinnaker.add_partitionable_edge(edge)
