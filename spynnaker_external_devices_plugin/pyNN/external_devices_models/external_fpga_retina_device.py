@@ -1,8 +1,8 @@
 import logging
 
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
@@ -59,7 +59,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 class ExternalFPGARetinaDevice(
         AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
-        AbstractProvidesOutgoingEdgeConstraints):
+        AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
     MODE_64 = "64"
@@ -133,8 +133,9 @@ class ExternalFPGARetinaDevice(
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
             MultiCastCommand(0, 0x0000FFFF, 0xFFFF0000, 1, 5, 100),
             MultiCastCommand(-1, 0x0000FFFE, 0xFFFF0000, 0, 5, 100)])
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition, graph_mapper):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
 
