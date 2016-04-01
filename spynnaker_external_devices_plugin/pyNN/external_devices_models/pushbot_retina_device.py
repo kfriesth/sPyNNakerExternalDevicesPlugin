@@ -2,8 +2,8 @@ from collections import namedtuple
 from enum import Enum, IntEnum
 
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
@@ -37,7 +37,7 @@ PushBotRetinaPolarity = IntEnum(
 
 class PushBotRetinaDevice(AbstractVirtualVertex,
                           AbstractSendMeMulticastCommandsVertex,
-                          AbstractProvidesOutgoingEdgeConstraints):
+                          AbstractProvidesOutgoingPartitionConstraints):
 
     # Mask for all SpiNNaker->Pushbot commands
     MANAGEMENT_MASK = 0xFFFFF800
@@ -103,12 +103,13 @@ class PushBotRetinaDevice(AbstractVirtualVertex,
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(
             self, self._get_commands())
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         if n_neurons != fixed_n_neurons and n_neurons is not None:
             print "Warning, the retina will have {} neurons".format(
                 fixed_n_neurons)
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition, graph_mapper):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._routing_key, self._routing_mask)])]
 
