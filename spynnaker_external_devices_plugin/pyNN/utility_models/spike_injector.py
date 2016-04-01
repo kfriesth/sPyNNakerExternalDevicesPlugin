@@ -1,6 +1,6 @@
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source\
     import ReverseIpTagMultiCastSource
 from spinn_front_end_common.utility_models\
@@ -20,7 +20,7 @@ from spynnaker.pyNN.models.common.eieio_spike_recorder \
 
 
 class SpikeInjector(ReverseIpTagMultiCastSource,
-                    AbstractProvidesOutgoingEdgeConstraints,
+                    AbstractProvidesOutgoingPartitionConstraints,
                     AbstractSpikeRecordable):
     """ An Injector of Spikes for PyNN populations.  This only allows the user\
         to specify the virtual_key of the population to identify the population
@@ -37,6 +37,7 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             self, n_keys=n_neurons, machine_time_step=machine_time_step,
             timescale_factor=timescale_factor, label=label, receive_port=port,
             virtual_key=virtual_key)
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         # Set up for recording
         self._spike_recorder = EIEIOSpikeRecorder(machine_time_step)
@@ -67,9 +68,9 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             placements, graph_mapper, self,
             lambda subvertex: subvertex.virtual_key)
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+    def get_outgoing_partition_constraints(
+            self, partition, graph_mapper):
         constraints = ReverseIpTagMultiCastSource\
-            .get_outgoing_edge_constraints(
-                self, partitioned_edge, graph_mapper)
+            .get_outgoing_partition_constraints(self, partition, graph_mapper)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints

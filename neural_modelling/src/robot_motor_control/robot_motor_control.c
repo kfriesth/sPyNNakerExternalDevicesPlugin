@@ -30,6 +30,12 @@ static uint32_t continue_if_not_different;
 static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 
+
+//! values for the priority for each callback
+typedef enum callback_priorities{
+    MC = -1, SDP = 0, TIMER = 2
+} callback_priorities;
+
 static inline void send(uint32_t direction, uint32_t speed) {
     uint32_t direction_key = direction | key;
     while (!spin1_send_mc_packet(direction_key, speed, WITH_PAYLOAD)) {
@@ -97,8 +103,7 @@ void timer_callback(uint unused0, uint unused1) {
 
     if ((infinite_run != TRUE) && (time == simulation_ticks)) {
         log_info("Simulation complete.\n");
-        spin1_exit(0);
-        return;
+        simulation_handle_pause_resume(NULL);
     }
 
     // Process the incoming spikes
@@ -173,7 +178,7 @@ void incoming_spike_callback(uint key, uint payload) {
 }
 
 static bool initialize(uint32_t *timer_period) {
-    log_info("initialize: started");
+    log_info("initialise: started");
 
     // Get the address this core's DTCM data starts at from SRAM
     address_t address = data_specification_get_data_address();
@@ -186,15 +191,14 @@ static bool initialize(uint32_t *timer_period) {
     // Get the timing details
     if (!simulation_read_timing_details(
             data_specification_get_region(0, address),
-            APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run)) {
+            APPLICATION_NAME_HASH, timer_period)) {
         return false;
     }
 
     // Get the parameters
     read_parameters(data_specification_get_region(1, address));
 
-    log_info("initialize: completed successfully");
+    log_info("initialise: completed successfully");
 
     return true;
 }
@@ -206,10 +210,10 @@ void c_main(void) {
     uint32_t timer_period = 0;
     if (!initialize(&timer_period)) {
         log_error("Error in initialisation - exiting!");
-        return;
+        rt_error(RTE_SWERR);
     }
 
-    // Initialize the incoming spike buffer
+    // Initialise the incoming spike buffer
     if (!in_spikes_initialize_spike_buffer(8192)) {
         return;
     }
@@ -218,12 +222,12 @@ void c_main(void) {
     spin1_set_timer_tick(timer_period);
 
     // Register callbacks
-    spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, -1);
-    spin1_callback_on(TIMER_TICK, timer_callback, 2);
-
-    log_info("Starting");
+    spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, MC);
+    spin1_callback_on(TIMER_TICK, timer_callback, TIMER);
+    simulation_register_simulation_sdp_callback(
+        &simulation_ticks, &infinite_run, SDP);
 
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
-    simulation_run();
+    simulation_run(timer_callback, TIMER);
 }
