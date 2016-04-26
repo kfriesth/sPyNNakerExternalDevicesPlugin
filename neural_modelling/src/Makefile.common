@@ -5,6 +5,7 @@ endif
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
 EXTRA_SRC_DIR := $(abspath $(CURRENT_DIR))
+SOURCE_DIRS += $(EXTRA_SRC_DIR)
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)../../spynnaker_external_devices_plugin/pyNN/model_binaries/)/
 CFLAGS += -I$(NEURAL_MODELLING_DIRS)/src
 
