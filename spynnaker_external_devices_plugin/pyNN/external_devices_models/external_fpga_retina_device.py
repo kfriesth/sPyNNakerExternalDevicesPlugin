@@ -68,28 +68,72 @@ class ExternalFPGARetinaDevice(
     UP_POLARITY = "UP"
     DOWN_POLARITY = "DOWN"
     MERGED_POLARITY = "MERGED"
+    DEFAULT_FIXED_MASK = 0xFFFF8000
 
-    def __init__(
-            self, mode, retina_key, spinnaker_link_id, polarity,
-            machine_time_step, timescale_factor, label=None, n_neurons=None):
-        """
+    """
         :param mode: The retina "mode"
         :param retina_key: The value of the top 16-bits of the key
         :param spinnaker_link_id: The spinnaker link to which the retina is\
                 connected
         :param polarity: The "polarity" of the retina data
-        :param machine_time_step: The time step of the simulation
-        :param timescale_factor: The timescale factor of the simulation
         :param label: The label for the population
         :param n_neurons: The number of neurons in the population
-        """
-        self._polarity = polarity
-        self._fixed_key = (retina_key & 0xFFFF) << 16
-        self._fixed_mask = 0xFFFF8000
-        if polarity == ExternalFPGARetinaDevice.UP_POLARITY:
-            self._fixed_key |= 0x4000
+    """
+    population_parameters = {
+        'spinnaker_link', 'polarity', 'retina_key', 'mode'}
 
-        fixed_n_neurons = n_neurons
+    model_name = "external FPGA retina device"
+
+    @staticmethod
+    def default_parameters(_):
+        return {}
+
+    @staticmethod
+    def fixed_parameters(_):
+        return {}
+
+    @staticmethod
+    def state_variables():
+        return list()
+
+    @staticmethod
+    def is_array_parameters(_):
+        return {}
+
+    def __init__(self, bag_of_neurons, label):
+        """
+        entrance for a fpga retina device
+        :param bag_of_neurons: the atoms covered by this vertex
+        :param label: the bale of this vertex
+        :return:
+        """
+
+        self._atoms = bag_of_neurons
+
+        # assume polarity is same for all atoms (as pop scoped)
+        polarity = bag_of_neurons[0].get_population_parameter('polarity')
+
+        # assume retina key is same for all atoms (as pop scoped)
+        fixed_key = bag_of_neurons[0].get_population_parameter('retina_key')
+        fixed_key = (fixed_key& 0xFFFF) << 16
+
+        # update fixed key based off polarity
+        if polarity == ExternalFPGARetinaDevice.UP_POLARITY:
+            fixed_key |= 0x4000
+
+        # update all atoms with new fixed_key
+        for atom in bag_of_neurons:
+            atom.set_population_parameter('retina_key', fixed_key)
+
+        # assume mode is same for all atoms (as pop scoped)
+        mode = bag_of_neurons[0].get_population_parameter('mode')
+
+        # assume spinnaker link is same for all atoms (as pop scoped)
+        spinnaker_link_id =\
+            bag_of_neurons[0].get_population_parameter('spinnaker_link_id')
+
+        # get default fixed mask
+        self._fixed_mask = ExternalFPGARetinaDevice.DEFAULT_FIXED_MASK
 
         if mode == ExternalFPGARetinaDevice.MODE_128:
             if (polarity == ExternalFPGARetinaDevice.UP_POLARITY or
@@ -120,10 +164,10 @@ class ExternalFPGARetinaDevice(
             else:
                 fixed_n_neurons = 16 * 16 * 2
         else:
-            raise exceptions.SpynnakerException("the FPGA retina does not "
-                                                "recongise this mode")
+            raise exceptions.SpynnakerException(
+                "the FPGA retina does not recognise this mode")
 
-        if fixed_n_neurons != n_neurons and n_neurons is not None:
+        if fixed_n_neurons != len(bag_of_neurons):
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
                         .format(fixed_n_neurons))
@@ -136,12 +180,12 @@ class ExternalFPGARetinaDevice(
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
     def get_outgoing_partition_constraints(self, partition, graph_mapper):
-        return [KeyAllocatorFixedKeyAndMaskConstraint(
-            [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
 
-    @property
-    def model_name(self):
-        return "external FPGA retina device"
+        # assume retina key is same for all atoms (as pop scoped)
+        fixed_key = self._n_atoms[0].get_population_parameter('retina_key')
+
+        return [KeyAllocatorFixedKeyAndMaskConstraint(
+            [BaseKeyAndMask(fixed_key, self._fixed_mask)])]
 
     def is_virtual_vertex(self):
         return True
