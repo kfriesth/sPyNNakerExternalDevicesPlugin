@@ -8,6 +8,8 @@ from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_contiguous_range_constraint \
     import KeyAllocatorContiguousRangeContraint
 
+import sys
+
 
 class SpikeInjector(ReverseIpTagMultiCastSource,
                     AbstractProvidesOutgoingPartitionConstraints):
@@ -15,14 +17,52 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
         to specify the virtual_key of the population to identify the population
     """
 
+    model_based_max_atoms_per_core = sys.maxint
+
+    population_parameters = {'machine_time_step', 'time_scale_factor', 'port',
+                             'virtual_key'}
+
+    @staticmethod
+    def default_parameters(_):
+        return {}
+
+    @staticmethod
+    def fixed_parameters(_):
+        return {}
+
+    @staticmethod
+    def state_variables(_):
+        return list()
+
+    @staticmethod
+    def is_array_parameters(_):
+        return {}
+
+    model_name = "SpikeInjector"
+
     def __init__(
-            self, n_neurons, machine_time_step, timescale_factor, label, port,
-            virtual_key=None):
+            self, bag_of_neurons, label="SpikeSourceArray",
+            constraints=None):
+
+        # determine machine time step
+        machine_time_step = \
+            bag_of_neurons[0].get_population_parameter('machine_time_step')
+
+        # determine time scale factor
+        time_scale_factor = \
+            bag_of_neurons[0].get_population_parameter('time_scale_factor')
+
+        # determine port
+        port = bag_of_neurons[0].get_population_parameter('port')
+
+        # determine virtual key
+        virtual_key = bag_of_neurons[0].get_population_parameter('virtual_key')
 
         ReverseIpTagMultiCastSource.__init__(
-            self, n_keys=n_neurons, machine_time_step=machine_time_step,
-            timescale_factor=timescale_factor, label=label, receive_port=port,
-            virtual_key=virtual_key)
+            self, n_keys=len(bag_of_neurons),
+            machine_time_step=machine_time_step,
+            timescale_factor=time_scale_factor, label=label, receive_port=port,
+            virtual_key=virtual_key, constraints=constraints)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
     def get_outgoing_partition_constraints(
