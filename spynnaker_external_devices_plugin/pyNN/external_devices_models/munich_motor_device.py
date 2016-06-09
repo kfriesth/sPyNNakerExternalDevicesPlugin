@@ -32,15 +32,37 @@ logger = logging.getLogger(__name__)
 
 class _MunichMotorDevice(AbstractVirtualVertex):
 
-    def __init__(self, spinnaker_link_id):
+    population_parameters = {'spinnaker_link'}
+
+    model_name = "external motor device"
+
+    @staticmethod
+    def default_parameters(_):
+        return {}
+
+    @staticmethod
+    def fixed_parameters(_):
+        return {}
+
+    @staticmethod
+    def state_variables():
+        return list()
+
+    @staticmethod
+    def is_array_parameters(_):
+        return {}
+
+    def __init__(
+            self, bag_of_neurons, label="External Munich Motor",
+            constraints=None):
+
+        # assume spinnaker link is same for all atoms (as pop scoped)
+        spinnaker_link_id =\
+            bag_of_neurons[0].get_population_parameter('spinnaker_link_id')
 
         AbstractVirtualVertex.__init__(
             self, 6, spinnaker_link_id,
             "External Munich Motor", max_atoms_per_core=6)
-
-    @property
-    def model_name(self):
-        return "external motor device"
 
     def is_virtual_vertex(self):
         return True
@@ -53,6 +75,29 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
     """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
+
+    population_parameters = {
+        'spinnaker_link', 'machine_time_step', 'timescale_factor',
+        'speed', 'sample_time', 'update_time', 'delay_time', 'delta_threshold',
+        'continue_if_not_different'}
+
+    model_name = "external motor device"
+
+    @staticmethod
+    def default_parameters(_):
+        return {}
+
+    @staticmethod
+    def fixed_parameters(_):
+        return {}
+
+    @staticmethod
+    def state_variables():
+        return list()
+
+    @staticmethod
+    def is_array_parameters(_):
+        return {}
 
     SYSTEM_REGION = 0
     PARAMS_REGION = 1
