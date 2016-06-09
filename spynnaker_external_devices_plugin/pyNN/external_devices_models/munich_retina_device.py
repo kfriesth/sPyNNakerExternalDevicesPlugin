@@ -49,18 +49,70 @@ class MunichRetinaDevice(
     LEFT_RETINA = "LEFT"
     RIGHT_RETINA = "RIGHT"
 
+    DEFAULT_FIXED_MASK = 0xFFFF8000
+
+    population_parameters = {
+        'spinnaker_link', 'polarity', 'retina_key', 'position'}
+
+    model_name = "external retina device"
+
+    @staticmethod
+    def default_parameters(_):
+        return {}
+
+    @staticmethod
+    def fixed_parameters(_):
+        return {}
+
+    @staticmethod
+    def state_variables():
+        return list()
+
+    @staticmethod
+    def is_array_parameters(_):
+        return {}
+
     def __init__(
+            self, bag_of_neurons, label=None, constraints=None):
+        '''
             self, retina_key, spinnaker_link_id, position, machine_time_step,
             timescale_factor, label=None, n_neurons=None, polarity=None):
+        '''
+
+        label = "external retina device at _position {} and _polarity {}"\
+            .format(self._position, self._polarity)
+
+        # assume polarity is same for all atoms (as pop scoped)
+        polarity = bag_of_neurons[0].get_population_parameter('polarity')
+
+        # assume retina key is same for all atoms (as pop scoped)
+        retina_key = bag_of_neurons[0].get_population_parameter('retina_key')
+
+        # assume polarity is same for all atoms (as pop scoped)
+        position = bag_of_neurons[0].get_population_parameter('position')
+
+        # check position is valid
+        if position != self.RIGHT_RETINA and position != self.LEFT_RETINA:
+            raise exceptions.SpynnakerException(
+                "The external Retina does not recognise this _position")
+
+        # assume retina key is same for all atoms (as pop scoped)
+        spinnaker_link_id = bag_of_neurons[0].get_population_parameter(
+            'spinnaker_link_id')
 
         if polarity is None:
             polarity = MunichRetinaDevice.MERGED_POLARITY
 
-        self._fixed_key = (retina_key & 0xFFFF) << 16
-        self._fixed_mask = 0xFFFF8000
+        # update retina key
+        retina_key = (retina_key & 0xFFFF) << 16
         if polarity == MunichRetinaDevice.UP_POLARITY:
-            self._fixed_key |= 0x4000
+            retina_key |= 0x4000
 
+        # update all atoms with new fixed_key
+        for atom in bag_of_neurons:
+            atom.set_population_parameter('retina_key', retina_key)
+
+        self._fixed_mask = MunichRetinaDevice.DEFAULT_FIXED_MASK
         if polarity == MunichRetinaDevice.MERGED_POLARITY:
 
             # There are 128 x 128 retina "pixels" x 2 polarities
@@ -71,24 +123,16 @@ class MunichRetinaDevice(
             fixed_n_neurons = 128 * 128
             self._fixed_mask = 0xFFFFC000
 
+        if len(bag_of_neurons) != fixed_n_neurons:
+            print "Warning, the retina will have {} neurons"\
+                .format(fixed_n_neurons)
+
         AbstractVirtualVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(
             self, self._get_commands(position))
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
-
-        self._polarity = polarity
-        self._position = position
-
-        if (self._position != self.RIGHT_RETINA and
-           self._position != self.LEFT_RETINA):
-            raise exceptions.SpynnakerException(
-                "The external Retina does not recognise this _position")
-
-        if n_neurons != fixed_n_neurons and n_neurons is not None:
-            print "Warning, the retina will have {} neurons".format(
-                fixed_n_neurons)
 
     def get_outgoing_partition_constraints(self, partition, graph_mapper):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
@@ -133,12 +177,6 @@ class MunichRetinaDevice(
             -1, disable_command, self.MANAGEMENT_MASK, 0, 5, 1000))
 
         return commands
-
-    @property
-    def model_name(self):
-        return "external retina device at " \
-               "_position {} and _polarity {}".format(self._position,
-                                                      self._polarity)
 
     def recieves_multicast_commands(self):
         return True
