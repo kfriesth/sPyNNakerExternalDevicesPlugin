@@ -105,31 +105,40 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
     SYSTEM_SIZE = 4 * 4
     PARAMS_SIZE = 7 * 4
 
-    def __init__(
+    def __init__(self, bag_of_neurons, label="SpikeSourceArray",
+                 constraints=None):
+        """
             self, n_neurons, machine_time_step, timescale_factor,
             spinnaker_link_id, speed=30, sample_time=4096, update_time=512,
             delay_time=5, delta_threshold=23, continue_if_not_different=True,
             label="RobotMotorControl"):
         """
-        """
 
-        if n_neurons != 6:
+        if len(bag_of_neurons) != 6:
             logger.warn("The specified number of neurons for the munich motor"
                         " device has been ignored; 6 will be used instead")
 
-        AbstractDataSpecableVertex.__init__(self, machine_time_step,
-                                            timescale_factor)
+        # store neurons for future use.
+        self._bag_of_neurons = bag_of_neurons
+
+        # determine machine time step
+        machine_time_step = \
+            bag_of_neurons[0].get_population_parameter('machine_time_step')
+
+        # determine time scale factor
+        time_scale_factor = \
+            bag_of_neurons[0].get_population_parameter('time_scale_factor')
+
+        # assume spinnaker link is same for all atoms (as pop scoped)
+        spinnaker_link_id =\
+            bag_of_neurons[0].get_population_parameter('spinnaker_link_id')
+
+        AbstractDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
         AbstractPartitionableVertex.__init__(self, 6, label, 6, None)
         AbstractVertexWithEdgeToDependentVertices.__init__(
             self, [_MunichMotorDevice(spinnaker_link_id)], None)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
-
-        self._speed = speed
-        self._sample_time = sample_time
-        self._update_time = update_time
-        self._delay_time = delay_time
-        self._delta_threshold = delta_threshold
-        self._continue_if_not_different = continue_if_not_different
 
     def get_outgoing_partition_constraints(self, partition, graph_mapper):
 
@@ -178,12 +187,27 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         # write params to memory
         spec.switch_write_focus(region=self.PARAMS_REGION)
         spec.write_value(data=edge_key)
-        spec.write_value(data=self._speed)
-        spec.write_value(data=self._sample_time)
-        spec.write_value(data=self._update_time)
-        spec.write_value(data=self._delay_time)
-        spec.write_value(data=self._delta_threshold)
-        if self._continue_if_not_different:
+
+        # determine pop based parameters
+        speed = self._bag_of_neurons[0].get_population_parameter('speed')
+        sample_time = \
+            self._bag_of_neurons[0].get_population_parameter('sample_time')
+        update_time = \
+            self._bag_of_neurons[0].get_population_parameter('update_time')
+        delay_time = \
+            self._bag_of_neurons[0].get_population_parameter('delay_time')
+        delta_threshold = \
+            self._bag_of_neurons[0].get_population_parameter('delta_threshold')
+        continue_if_not_different = \
+            self._bag_of_neurons[0].get_population_parameter(
+                'continue_if_not_different')
+
+        spec.write_value(data=speed)
+        spec.write_value(data=sample_time)
+        spec.write_value(data=update_time)
+        spec.write_value(data=delay_time)
+        spec.write_value(data=delta_threshold)
+        if continue_if_not_different:
             spec.write_value(data=1)
         else:
             spec.write_value(data=0)
@@ -217,10 +241,6 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
                                    size=self.PARAMS_SIZE,
                                    label='params')
 
-    @property
-    def model_name(self):
-        return "Munich Motor Control"
-
     def get_sdram_usage_for_atoms(self, vertex_slice, graph):
         return self.SYSTEM_SIZE + self.PARAMS_SIZE
 
@@ -236,5 +256,5 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
     def is_data_specable(self):
         return True
 
-    def partition_identifier_for_dependent_edge(self, dependent_edge):
+    def partition_identifier_for_dependent_edge(self, _):
         return None
