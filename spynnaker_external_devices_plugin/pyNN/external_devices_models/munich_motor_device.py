@@ -61,8 +61,8 @@ class _MunichMotorDevice(AbstractVirtualVertex):
             bag_of_neurons[0].get_population_parameter('spinnaker_link_id')
 
         AbstractVirtualVertex.__init__(
-            self, 6, spinnaker_link_id,
-            "External Munich Motor", max_atoms_per_core=6)
+            self, 6, spinnaker_link_id, constraints=constraints,
+            label="External Munich Motor", max_atoms_per_core=6)
 
     def is_virtual_vertex(self):
         return True
@@ -135,7 +135,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
 
         AbstractDataSpecableVertex.__init__(
             self, machine_time_step, time_scale_factor)
-        AbstractPartitionableVertex.__init__(self, 6, label, 6, None)
+        AbstractPartitionableVertex.__init__(self, 6, label, 6, constraints)
         AbstractVertexWithEdgeToDependentVertices.__init__(
             self, [_MunichMotorDevice(spinnaker_link_id)], None)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)

@@ -25,7 +25,7 @@ class ExternalCochleaDevice(AbstractVirtualVertex):
     def is_array_parameters(_):
         return {}
 
-    def __init__(self, bag_of_neurons, label):
+    def __init__(self, bag_of_neurons, label, constraints=None):
 
         # can assume spinnaker link is consistent between atoms, as its a
         # population parameter
@@ -34,7 +34,7 @@ class ExternalCochleaDevice(AbstractVirtualVertex):
 
         AbstractVirtualVertex.__init__(
             self, len(bag_of_neurons), spinnaker_link, label=label,
-            max_atoms_per_core=len(bag_of_neurons))
+            max_atoms_per_core=len(bag_of_neurons), constraints=constraints)
 
     def is_virtual_vertex(self):
         return True

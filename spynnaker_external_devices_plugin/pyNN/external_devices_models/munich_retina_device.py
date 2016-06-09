@@ -74,10 +74,6 @@ class MunichRetinaDevice(
 
     def __init__(
             self, bag_of_neurons, label=None, constraints=None):
-        '''
-            self, retina_key, spinnaker_link_id, position, machine_time_step,
-            timescale_factor, label=None, n_neurons=None, polarity=None):
-        '''
 
         label = "external retina device at _position {} and _polarity {}"\
             .format(self._position, self._polarity)
@@ -125,7 +121,7 @@ class MunichRetinaDevice(
 
         if len(bag_of_neurons) != fixed_n_neurons:
             print "Warning, the retina will have {} neurons"\
-                .format(fixed_n_neurons)
+                .format(len(bag_of_neurons))
 
         AbstractVirtualVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,

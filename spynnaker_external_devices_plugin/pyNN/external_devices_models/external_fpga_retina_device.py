@@ -100,7 +100,7 @@ class ExternalFPGARetinaDevice(
     def is_array_parameters(_):
         return {}
 
-    def __init__(self, bag_of_neurons, label):
+    def __init__(self, bag_of_neurons, label, constraints=None):
         """
         entrance for a fpga retina device
         :param bag_of_neurons: the atoms covered by this vertex
@@ -170,10 +170,11 @@ class ExternalFPGARetinaDevice(
         if fixed_n_neurons != len(bag_of_neurons):
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
-                        .format(fixed_n_neurons))
+                        .format(len(bag_of_neurons)))
         AbstractVirtualVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label)
+            max_atoms_per_core=fixed_n_neurons, label=label,
+            constraints=constraints)
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
             MultiCastCommand(0, 0x0000FFFF, 0xFFFF0000, 1, 5, 100),
             MultiCastCommand(-1, 0x0000FFFE, 0xFFFF0000, 0, 5, 100)])
