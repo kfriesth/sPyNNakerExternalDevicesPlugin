@@ -8,6 +8,8 @@ from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_contiguous_range_constraint \
     import KeyAllocatorContiguousRangeContraint
 
+from spynnaker.pyNN.utilities import conf
+
 import sys
 
 
@@ -19,8 +21,10 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
 
     model_based_max_atoms_per_core = sys.maxint
 
-    population_parameters = {'machine_time_step', 'time_scale_factor', 'port',
-                             'virtual_key'}
+    population_parameters = {
+        'machine_time_step', 'time_scale_factor', 'port', 'virtual_key',
+        'database_notify_port_num', 'database_notify_host',
+        'database_ack_port_num'}
 
     @staticmethod
     def default_parameters(_):
@@ -44,6 +48,35 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             self, bag_of_neurons, label="SpikeSourceArray",
             constraints=None):
 
+        database_notify_port_num = bag_of_neurons[0].\
+            get_population_parameter('database_notify_port_num')
+        database_notify_host = bag_of_neurons[0].\
+            get_population_parameter('database_notify_host')
+        database_ack_port_num = bag_of_neurons[0].\
+            get_population_parameter('database_ack_port_num')
+
+        if database_notify_port_num is None:
+            database_notify_port_num = conf.config.getint(
+                "Database", "notify_port")
+            for atom in bag_of_neurons:
+                atom.set_population_parameter(
+                    "database_notify_port_num", database_notify_port_num)
+
+        if database_notify_host is None:
+            database_notify_host = conf.config.get(
+                "Database", "notify_hostname")
+            for atom in bag_of_neurons:
+                atom.set_population_parameter(
+                    "database_notify_host", database_notify_host)
+
+        if database_ack_port_num is None:
+            database_ack_port_num = conf.config.get("Database", "listen_port")
+            if database_ack_port_num == "None":
+                database_ack_port_num = None
+            for atom in bag_of_neurons:
+                atom.set_population_parameter(
+                    "database_ack_port_num", database_ack_port_num)
+
         # determine machine time step
         machine_time_step = \
             bag_of_neurons[0].get_population_parameter('machine_time_step')
@@ -62,8 +95,18 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             self, n_keys=len(bag_of_neurons),
             machine_time_step=machine_time_step,
             timescale_factor=time_scale_factor, label=label, receive_port=port,
-            virtual_key=virtual_key, constraints=constraints)
+            virtual_key=virtual_key, constraints=constraints,
+            send_buffer_notification_port=database_notify_port_num,
+            send_buffer_notification_ip_address=database_notify_host,
+            send_buffer_notification_ack_port=database_ack_port_num)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+
+    @staticmethod
+    def create_vertex(bag_of_neurons, population_parameters):
+        params = dict(population_parameters)
+        params['bag_of_neurons'] = bag_of_neurons
+        vertex = SpikeInjector(**params)
+        return vertex
 
     def get_outgoing_partition_constraints(
             self, partition, graph_mapper):

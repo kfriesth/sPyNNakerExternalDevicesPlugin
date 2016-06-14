@@ -26,14 +26,11 @@ from spynnaker_external_devices_plugin.pyNN.\
     spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager
 from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
-    import SpikeInjector as SpynnakerExternalDeviceSpikeInjector
+    import SpikeInjector
 from spynnaker_external_devices_plugin.pyNN.connections\
     .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 from spynnaker.pyNN.utilities import conf
-from spynnaker.pyNN import IF_curr_exp
 from spynnaker.pyNN.spinnaker import executable_finder
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
 
 executable_finder.add_path(os.path.dirname(model_binaries.__file__))
 spynnaker_external_devices = SpynnakerExternalDevicePluginManager()
@@ -116,17 +113,11 @@ def activate_live_output_for(
 
     # add new edge and vertex if required to spinnaker graph
     spynnaker_external_devices.add_edge_to_recorder_vertex(
-        population._vertex, port, host, tag, board_address, strip_sdp,
+        population, port, host, database_notify_port_num, database_notify_host,
+        database_ack_port_num, tag, board_address, strip_sdp,
         use_prefix, key_prefix, prefix_type, message_type, right_shift,
         payload_as_time_stamps, use_payload_prefix, payload_prefix,
         payload_right_shift, number_of_packets_sent_per_time_step)
-    # build the database socket address used by the notifcation interface
-    database_socket = SocketAddress(
-        listen_port=database_ack_port_num,
-        notify_host_name=database_notify_host,
-        notify_port_no=database_notify_port_num)
-    # update socket interface with new demands.
-    spynnaker_external_devices.add_socket_address(database_socket)
 
 
 def activate_live_output_to(population, device):
@@ -138,61 +129,4 @@ def activate_live_output_to(population, device):
     :param device: The pyNN population external device to which the spikes\
                 will be sent.
     """
-    spynnaker_external_devices.add_edge(
-        population._get_vertex, device._get_vertex)
-
-
-def SpikeInjector(
-        n_neurons, machine_time_step, timescale_factor, label, port,
-        virtual_key=None, database_notify_host=None,
-        database_notify_port_num=None, database_ack_port_num=None):
-    """ Supports adding a spike injector to the application graph.
-
-    :param n_neurons: the number of neurons the spike injector will emulate
-    :type n_neurons: int
-    :param machine_time_step: the time period in ms for each timer callback
-    :type machine_time_step: int
-    :param timescale_factor: the amount of scaling needed of the machine time\
-            step (basically a slow down function)
-    :type timescale_factor: int
-    :param label: the label given to the population
-    :type label: str
-    :param port: the port number used to listen for injections of spikes
-    :type port: int
-    :param virtual_key: the virtual key used in the routing system
-    :type virtual_key: int
-    :param database_notify_host: the hostname for the device which is\
-            listening to the database notification.
-    :type database_notify_host: str
-    :param database_ack_port_num: the port number to which a external device\
-            will ack that they have finished reading the database and are\
-            ready for it to start execution
-    :type database_ack_port_num: int
-    :param database_notify_port_num: The port number to which a external\
-            device will receive the database is ready command
-    :type database_notify_port_num: int
-
-    :return:
-    """
-    if database_notify_port_num is None:
-        database_notify_port_num = conf.config.getint("Database",
-                                                      "notify_port")
-    if database_notify_host is None:
-        database_notify_host = conf.config.get("Database", "notify_hostname")
-    if database_ack_port_num is None:
-        database_ack_port_num = conf.config.get("Database", "listen_port")
-        if database_ack_port_num == "None":
-            database_ack_port_num = None
-
-    # build the database socket address used by the notification interface
-    database_socket = SocketAddress(
-        listen_port=database_ack_port_num,
-        notify_host_name=database_notify_host,
-        notify_port_no=database_notify_port_num)
-
-    # update socket interface with new demands.
-    spynnaker_external_devices.add_socket_address(database_socket)
-    return SpynnakerExternalDeviceSpikeInjector(
-        n_neurons=n_neurons, machine_time_step=machine_time_step,
-        timescale_factor=timescale_factor, label=label, port=port,
-        virtual_key=virtual_key)
+    spynnaker_external_devices.add_edge(population, device)
