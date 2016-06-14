@@ -60,6 +60,16 @@ def get_spike_value_from_fpga_retina(key, mode):
 class ExternalFPGARetinaDevice(
         AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
+    """
+    A FPGA retina plugged in  via the SpiNNLink.
+    Params as follows:
+
+    :param mode: The retina "mode"
+    :param retina_key: The value of the top 16-bits of the key
+    :param spinnaker_link_id: The spinnaker link to which the retina is\
+            connected
+    :param polarity: The "polarity" of the retina data
+    """
 
     MODE_128 = "128"
     MODE_64 = "64"
@@ -70,15 +80,6 @@ class ExternalFPGARetinaDevice(
     MERGED_POLARITY = "MERGED"
     DEFAULT_FIXED_MASK = 0xFFFF8000
 
-    """
-        :param mode: The retina "mode"
-        :param retina_key: The value of the top 16-bits of the key
-        :param spinnaker_link_id: The spinnaker link to which the retina is\
-                connected
-        :param polarity: The "polarity" of the retina data
-        :param label: The label for the population
-        :param n_neurons: The number of neurons in the population
-    """
     population_parameters = {
         'spinnaker_link', 'polarity', 'retina_key', 'mode'}
 

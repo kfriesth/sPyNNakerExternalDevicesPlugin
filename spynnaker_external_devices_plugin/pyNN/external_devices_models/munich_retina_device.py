@@ -31,6 +31,9 @@ def get_spike_value_from_robot_retina(key):
 class MunichRetinaDevice(
         AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
+    """
+    the munich retina thats connected to the ombibot
+    """
 
     # key codes for the robot retina
     MANAGEMENT_BIT = 0x400

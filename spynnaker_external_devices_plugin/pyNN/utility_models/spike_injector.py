@@ -1,15 +1,19 @@
+# spinn front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source\
     import ReverseIpTagMultiCastSource
 
+# pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_contiguous_range_constraint \
     import KeyAllocatorContiguousRangeContraint
 
+# spynnaker imports
 from spynnaker.pyNN.utilities import conf
 
+# general imports
 import sys
 
 
@@ -45,9 +49,9 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
     model_name = "SpikeInjector"
 
     def __init__(
-            self, bag_of_neurons, label="SpikeSourceArray",
-            constraints=None):
+            self, bag_of_neurons, label="SpikeSourceArray", constraints=None):
 
+        # get database notification protocol data items.
         database_notify_port_num = bag_of_neurons[0].\
             get_population_parameter('database_notify_port_num')
         database_notify_host = bag_of_neurons[0].\
@@ -55,6 +59,7 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
         database_ack_port_num = bag_of_neurons[0].\
             get_population_parameter('database_ack_port_num')
 
+        # get defaults as required.
         if database_notify_port_num is None:
             database_notify_port_num = conf.config.getint(
                 "Database", "notify_port")
@@ -91,6 +96,7 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
         # determine virtual key
         virtual_key = bag_of_neurons[0].get_population_parameter('virtual_key')
 
+        # push to RITMCS interface
         ReverseIpTagMultiCastSource.__init__(
             self, n_keys=len(bag_of_neurons),
             machine_time_step=machine_time_step,
@@ -103,13 +109,27 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
 
     @staticmethod
     def create_vertex(bag_of_neurons, population_parameters):
+        """
+        creates a SpikeInjector vertex for a bag of atoms.
+        :param bag_of_neurons: the bag of atoms to put into a  vertex
+        :param population_parameters: the params to push to teh vertex
+        :return: a vertex
+        """
+        # add bag of atoms to the params
         params = dict(population_parameters)
         params['bag_of_neurons'] = bag_of_neurons
+
+        # create and return the vertex
         vertex = SpikeInjector(**params)
         return vertex
 
-    def get_outgoing_partition_constraints(
-            self, partition, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition, graph_mapper):
+        """
+        get any constraints for edges coming out of this vertex
+        :param partition: the partition id to consider
+        :param graph_mapper: the mapping between graphs.
+        :return: list of constraints.
+        """
         constraints = ReverseIpTagMultiCastSource\
             .get_outgoing_partition_constraints(self, partition, graph_mapper)
         constraints.append(KeyAllocatorContiguousRangeContraint())

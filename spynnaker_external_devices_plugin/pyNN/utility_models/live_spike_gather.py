@@ -1,9 +1,16 @@
+# spinn front end common imports
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
+
+# spinnman imports
 from spinnman.messages.eieio.eieio_type import EIEIOType
 
 
 class LiveSpikeGather(LivePacketGather):
+    """
+    encapsulation class to convert from bag of atoms interface to normal
+    class hierarchy format.
+    """
 
     population_parameters = {
         'machine_time_step', 'time_scale_factor', 'ip_address',
@@ -124,6 +131,7 @@ class LiveSpikeGather(LivePacketGather):
         if number_of_packets_sent_per_time_step is None:
             number_of_packets_sent_per_time_step = 0
 
+        # push params into the LPG class in the normal way
         LivePacketGather.__init__(
             self, machine_time_step=machine_time_step,
             timescale_factor=time_scale_factor, ip_address=ip_address,
@@ -145,8 +153,18 @@ class LiveSpikeGather(LivePacketGather):
 
     @staticmethod
     def create_vertex(bag_of_neurons, population_parameters):
+        """
+        create a vertex for this bag of atoms
+        :param bag_of_neurons: the bag of atoms to put into a vertex
+        :param population_parameters: the params of the vertex
+        :return: the vertex which contains the bag of atoms.
+        """
+
+        # add bag of atoms to params
         params = dict(population_parameters)
         params['bag_of_neurons'] = bag_of_neurons
+
+        # build and return vertex
         vertex = LiveSpikeGather(**params)
         return vertex
 

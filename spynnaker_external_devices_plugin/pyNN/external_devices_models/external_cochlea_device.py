@@ -3,6 +3,9 @@ from pacman.model.abstract_classes.abstract_virtual_vertex \
 
 
 class ExternalCochleaDevice(AbstractVirtualVertex):
+    """
+    cochlea device plugged in via a spinnLink
+    """
 
     population_parameters = {
         'machine_time_step', 'time_scale_factor', 'spinnaker_link'}
