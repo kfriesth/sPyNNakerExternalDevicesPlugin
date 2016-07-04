@@ -7,14 +7,14 @@
 #include <string.h>
 
 // Counters
-#define N_COUNTERS       6
-#define	MOTION_FORWARD   0x01
-#define MOTION_BACK	     0x02
-#define	MOTION_RIGHT     0x03
-#define	MOTION_LEFT	     0x04
-#define	MOTION_CLOCKWISE 0x05
-#define	MOTION_C_CLKWISE 0x06
-#define NEURON_ID_MASK   0x7FF
+#define N_COUNTERS         6
+#define	MOTION_FORWARD     0x01
+#define MOTION_BACK	       0x02
+#define	MOTION_RIGHT       0x03
+#define	MOTION_LEFT	       0x04
+#define	MOTION_CLOCKWISE   0x05
+#define	MOTION_C_CLOCKWISE 0x06
+#define NEURON_ID_MASK     0x7FF
 
 // Globals
 static uint32_t time;
@@ -125,7 +125,7 @@ void timer_callback(uint unused0, uint unused1) {
         // Do motion in pairs
         do_motion(MOTION_FORWARD, MOTION_BACK, "Forwards", "Backwards");
         do_motion(MOTION_LEFT, MOTION_RIGHT, "Left", "Right");
-        do_motion(MOTION_CLOCKWISE, MOTION_C_CLKWISE, "Clockwise",
+        do_motion(MOTION_CLOCKWISE, MOTION_C_CLOCKWISE, "Clockwise",
                   "Anti-clockwise");
 
         // Reset the counters
@@ -137,7 +137,7 @@ void timer_callback(uint unused0, uint unused1) {
         // Do updates in pairs
         do_update(MOTION_FORWARD, MOTION_BACK, "Forwards", "Backwards");
         do_update(MOTION_LEFT, MOTION_RIGHT, "Left", "Right");
-        do_update(MOTION_CLOCKWISE, MOTION_C_CLKWISE, "Clockwise",
+        do_update(MOTION_CLOCKWISE, MOTION_C_CLOCKWISE, "Clockwise",
                   "Anti-clockwise");
     }
 }
