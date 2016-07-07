@@ -7,14 +7,14 @@
 #include <string.h>
 
 // Counters
-#define N_COUNTERS       6
-#define	MOTION_FORWARD   0x01
-#define MOTION_BACK	     0x02
-#define	MOTION_RIGHT     0x03
-#define	MOTION_LEFT	     0x04
-#define	MOTION_CLOCKWISE 0x05
-#define	MOTION_C_CLKWISE 0x06
-#define NEURON_ID_MASK   0x7FF
+#define N_COUNTERS         6
+#define	MOTION_FORWARD     0x01
+#define MOTION_BACK	       0x02
+#define	MOTION_RIGHT       0x03
+#define	MOTION_LEFT	       0x04
+#define	MOTION_CLOCKWISE   0x05
+#define	MOTION_C_CLOCKWISE 0x06
+#define NEURON_ID_MASK     0x7FF
 
 // Globals
 static uint32_t time;
@@ -125,7 +125,7 @@ void timer_callback(uint unused0, uint unused1) {
         // Do motion in pairs
         do_motion(MOTION_FORWARD, MOTION_BACK, "Forwards", "Backwards");
         do_motion(MOTION_LEFT, MOTION_RIGHT, "Left", "Right");
-        do_motion(MOTION_CLOCKWISE, MOTION_C_CLKWISE, "Clockwise",
+        do_motion(MOTION_CLOCKWISE, MOTION_C_CLOCKWISE, "Clockwise",
                   "Anti-clockwise");
 
         // Reset the counters
@@ -137,7 +137,7 @@ void timer_callback(uint unused0, uint unused1) {
         // Do updates in pairs
         do_update(MOTION_FORWARD, MOTION_BACK, "Forwards", "Backwards");
         do_update(MOTION_LEFT, MOTION_RIGHT, "Left", "Right");
-        do_update(MOTION_CLOCKWISE, MOTION_C_CLKWISE, "Clockwise",
+        do_update(MOTION_CLOCKWISE, MOTION_C_CLOCKWISE, "Clockwise",
                   "Anti-clockwise");
     }
 }
@@ -188,10 +188,11 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // Get the timing details
-    if (!simulation_read_timing_details(
+    // Get the timing details and set up the simulation interface
+    if (!simulation_initialise(
             data_specification_get_region(0, address),
-            APPLICATION_NAME_HASH, timer_period)) {
+            APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
+            &infinite_run, SDP, NULL, NULL)) {
         return false;
     }
 
@@ -224,8 +225,6 @@ void c_main(void) {
     // Register callbacks
     spin1_callback_on(MC_PACKET_RECEIVED, incoming_spike_callback, MC);
     spin1_callback_on(TIMER_TICK, timer_callback, TIMER);
-    simulation_register_simulation_sdp_callback(
-        &simulation_ticks, &infinite_run, SDP);
 
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
