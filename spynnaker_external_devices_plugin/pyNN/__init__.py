@@ -21,7 +21,11 @@ from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     pushbot_retina_device import PushBotRetinaPolarity
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_motor_device import MunichMotorDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    arbitary_sata_device import ArbitarySATADevice
+
 from spynnaker_external_devices_plugin.pyNN import model_binaries
+
 from spynnaker_external_devices_plugin.pyNN.\
     spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager
@@ -29,9 +33,13 @@ from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
     import SpikeInjector as SpynnakerExternalDeviceSpikeInjector
 from spynnaker_external_devices_plugin.pyNN.connections\
     .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
+
+
 from spynnaker.pyNN.utilities import conf
 from spynnaker.pyNN import IF_curr_exp
 from spynnaker.pyNN.spinnaker import executable_finder
+
+
 from spinn_front_end_common.utilities.notification_protocol.socket_address \
     import SocketAddress
 

@@ -1,21 +1,28 @@
-from collections import namedtuple
-from enum import Enum, IntEnum
-
+# fec imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+
+# pynn imports
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
+from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+
+# pacman improts
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
-from spynnaker.pyNN import exceptions
-from pacman.model.abstract_classes.abstract_virtual_vertex import \
-    AbstractVirtualVertex
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
+# external devices plugin imports
+from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+    AbstractSpiNNakerLinkVertex
+
+# general imports
+from collections import namedtuple
+from enum import Enum, IntEnum
 
 # Named tuple bundling together configuration elements of a pushbot resolution
 # config
@@ -35,7 +42,7 @@ PushBotRetinaPolarity = IntEnum(
     names=["Up", "Down", "Merged"])
 
 
-class PushBotRetinaDevice(AbstractVirtualVertex,
+class PushBotRetinaDevice(AbstractSpiNNakerLinkVertex,
                           AbstractSendMeMulticastCommandsVertex,
                           AbstractProvidesOutgoingPartitionConstraints):
 
@@ -53,10 +60,12 @@ class PushBotRetinaDevice(AbstractVirtualVertex,
     SENSOR_SET_KEY = 0x0
     SENSOR_SET_PUSHBOT = 0x1
 
-    def __init__(self, fixed_key, spinnaker_link_id, machine_time_step,
-                 timescale_factor, label=None, n_neurons=None,
-                 polarity=PushBotRetinaPolarity.Merged,
-                 resolution=PushBotRetinaResolution.Downsample64):
+    def __init__(
+            self, fixed_key, spinnaker_link_id, machine_time_step,
+            timescale_factor, label=None, n_neurons=None,
+            polarity=PushBotRetinaPolarity.Merged,
+            resolution=PushBotRetinaResolution.Downsample64,
+            board_address=None):
 
         # Validate number of timestamp bytes
         if not isinstance(polarity, PushBotRetinaPolarity):
@@ -98,9 +107,10 @@ class PushBotRetinaDevice(AbstractVirtualVertex,
         # Build routing mask
         self._routing_mask = ~((1 << mask_bits) - 1) & 0xFFFFFFFF
 
-        AbstractVirtualVertex.__init__(
-            self, fixed_n_neurons, spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label)
+        AbstractSpiNNakerLinkVertex.__init__(
+            self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
+            max_atoms_per_core=fixed_n_neurons, label=label,
+            board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(
             self, self._get_commands())
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)

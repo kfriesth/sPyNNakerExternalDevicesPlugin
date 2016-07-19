@@ -1,19 +1,19 @@
 import logging
 
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_partition_constraints import \
-    AbstractProvidesOutgoingPartitionConstraints
-from spynnaker.pyNN.models.abstract_models\
-    .abstract_send_me_multicast_commands_vertex \
-    import AbstractSendMeMulticastCommandsVertex
-from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
+from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+    AbstractSpiNNakerLinkVertex
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
+from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.models.abstract_models\
+    .abstract_send_me_multicast_commands_vertex \
+    import AbstractSendMeMulticastCommandsVertex
+from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 
 class ExternalFPGARetinaDevice(
-        AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
+        AbstractSpiNNakerLinkVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
@@ -71,7 +71,8 @@ class ExternalFPGARetinaDevice(
 
     def __init__(
             self, mode, retina_key, spinnaker_link_id, polarity,
-            machine_time_step, timescale_factor, label=None, n_neurons=None):
+            machine_time_step, timescale_factor, label=None, n_neurons=None,
+            board_address=None):
         """
         :param mode: The retina "mode"
         :param retina_key: The value of the top 16-bits of the key
@@ -127,9 +128,10 @@ class ExternalFPGARetinaDevice(
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
                         .format(fixed_n_neurons))
-        AbstractVirtualVertex.__init__(
-            self, fixed_n_neurons, spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label)
+        AbstractSpiNNakerLinkVertex.__init__(
+            self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
+            label=label, max_atoms_per_core=fixed_n_neurons,
+            board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
             MultiCastCommand(0, 0x0000FFFF, 0xFFFF0000, 1, 5, 100),
             MultiCastCommand(-1, 0x0000FFFE, 0xFFFF0000, 0, 5, 100)])

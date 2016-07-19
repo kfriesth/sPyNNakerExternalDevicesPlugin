@@ -1,21 +1,28 @@
+# front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+
+# pynn improts
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
+from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+
+#pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
-from spynnaker.pyNN import exceptions
-
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
+#external devices plugin imports
+from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+    AbstractSpiNNakerLinkVertex
 
 # robot with 7 7 1
+
+
 def get_x_from_robot_retina(key):
     return (key >> 7) & 0x7f
 
@@ -29,7 +36,7 @@ def get_spike_value_from_robot_retina(key):
 
 
 class MunichRetinaDevice(
-        AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
+        AbstractSpiNNakerLinkVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     # key codes for the robot retina
@@ -51,7 +58,8 @@ class MunichRetinaDevice(
 
     def __init__(
             self, retina_key, spinnaker_link_id, position, machine_time_step,
-            timescale_factor, label=None, n_neurons=None, polarity=None):
+            timescale_factor, label=None, n_neurons=None, polarity=None,
+            board_address=None):
 
         if polarity is None:
             polarity = MunichRetinaDevice.MERGED_POLARITY
@@ -71,9 +79,10 @@ class MunichRetinaDevice(
             fixed_n_neurons = 128 * 128
             self._fixed_mask = 0xFFFFC000
 
-        AbstractVirtualVertex.__init__(
-            self, fixed_n_neurons, spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label)
+        AbstractSpiNNakerLinkVertex.__init__(
+            self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
+            max_atoms_per_core=fixed_n_neurons, label=label,
+            board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(
             self, self._get_commands(position))
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)

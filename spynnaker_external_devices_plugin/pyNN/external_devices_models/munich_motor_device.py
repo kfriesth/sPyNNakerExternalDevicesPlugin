@@ -1,16 +1,13 @@
 # spynnaker imports
+from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.models.abstract_models\
     .abstract_vertex_with_dependent_vertices import \
     AbstractVertexWithEdgeToDependentVertices
-from spynnaker.pyNN import exceptions
 
 # pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
-from spinn_front_end_common.utilities import constants
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
 from pacman.model.partitionable_graph.abstract_partitionable_vertex \
     import AbstractPartitionableVertex
 
@@ -20,23 +17,30 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex\
 from spinn_front_end_common.abstract_models\
     .abstract_provides_outgoing_partition_constraints\
     import AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utilities import constants
 
+# dsg imports
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
 # general imports
 import logging
 
+# external devices imports
+from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+    AbstractSpiNNakerLinkVertex
+
 logger = logging.getLogger(__name__)
 
 
-class _MunichMotorDevice(AbstractVirtualVertex):
+class _MunichMotorDevice(AbstractSpiNNakerLinkVertex):
 
-    def __init__(self, spinnaker_link_id):
+    def __init__(self, spinnaker_link_id, board_address=None):
 
-        AbstractVirtualVertex.__init__(
-            self, 6, spinnaker_link_id,
-            "External Munich Motor", max_atoms_per_core=6)
+        AbstractSpiNNakerLinkVertex.__init__(
+            self, n_atoms=6, spinnaker_link_id=spinnaker_link_id,
+            label="External Munich Motor", max_atoms_per_core=6,
+            board_address=board_address)
 
     @property
     def model_name(self):
