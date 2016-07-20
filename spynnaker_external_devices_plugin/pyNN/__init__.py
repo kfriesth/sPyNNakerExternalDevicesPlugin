@@ -8,21 +8,21 @@ import os
 
 from spinnman.messages.eieio.eieio_type import EIEIOType
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    external_cochlea_device import ExternalCochleaDevice
+    external_spinnaker_link_cochlea_device import ExternalCochleaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    external_fpga_retina_device import ExternalFPGARetinaDevice
+    external_spinnaker_link_fpga_retina_device import ExternalFPGARetinaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    munich_retina_device import MunichRetinaDevice
+    munich_spinnaker_link_retina_device import MunichRetinaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_retina_device import PushBotRetinaDevice
+    pushbot_spinnaker_link_retina_device import PushBotRetinaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_retina_device import PushBotRetinaResolution
+    pushbot_spinnaker_link_retina_device import PushBotRetinaResolution
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_retina_device import PushBotRetinaPolarity
+    pushbot_spinnaker_link_retina_device import PushBotRetinaPolarity
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    munich_motor_device import MunichMotorDevice
+    munich_spinnaker_link_motor_device import MunichMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    arbitary_sata_device import ArbitarySATADevice
+    arbitary_fpga_device import ArbitaryFPGADevice
 
 from spynnaker_external_devices_plugin.pyNN import model_binaries
 
@@ -36,7 +36,6 @@ from spynnaker_external_devices_plugin.pyNN.connections\
 
 
 from spynnaker.pyNN.utilities import conf
-from spynnaker.pyNN import IF_curr_exp
 from spynnaker.pyNN.spinnaker import executable_finder
 
 
