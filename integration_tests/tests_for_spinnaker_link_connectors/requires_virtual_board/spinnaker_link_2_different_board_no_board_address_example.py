@@ -11,7 +11,7 @@ p.setup(timestep=1.0)
 # FPGA Retina
 retina_pop = p.Population(
     2000, external_devices.ExternalFPGARetinaDevice, {
-        'spinnaker_link_id': 1,
+        'spinnaker_link_id': 0,
         'retina_key': 0x5,
         'mode': external_devices.ExternalFPGARetinaDevice.MODE_128,
         'polarity': external_devices.ExternalFPGARetinaDevice.DOWN_POLARITY},
@@ -19,7 +19,7 @@ retina_pop = p.Population(
 
 retina_pop2 = p.Population(
     2000, external_devices.ExternalFPGARetinaDevice, {
-        'spinnaker_link_id': 1,
+        'spinnaker_link_id': 0,
         'retina_key': 0x5,
         'mode': external_devices.ExternalFPGARetinaDevice.MODE_128,
         'polarity': external_devices.ExternalFPGARetinaDevice.DOWN_POLARITY},
