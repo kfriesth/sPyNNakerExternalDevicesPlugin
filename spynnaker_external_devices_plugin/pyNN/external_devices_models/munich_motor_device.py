@@ -97,7 +97,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
 
     def generate_data_spec(
             self, vertex, placement, machine_graph, graph,
-            routing_info, hostname, graph_subgraph_mapper,
+            routing_info, hostname, graph_mapper,
             report_folder, ip_tags, reverse_ip_tags,
             write_text_specs, application_run_time_folder):
         """
@@ -119,7 +119,7 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         spec.comment("\n*** Spec for robot motor control ***\n\n")
         self._write_basic_setup_info(spec, self.SYSTEM_REGION)
 
-        # locate correct subedge for key
+        # Get the key
         edge_key = routing_info.get_first_key_from_pre_vertex(
             vertex, MOTOR_PARTITION_ID)
         if edge_key is None:
