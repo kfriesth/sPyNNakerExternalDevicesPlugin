@@ -7,8 +7,8 @@ from spynnaker.pyNN.models.abstract_models\
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
+from pacman.model.graph.application.simple_virtual_application_vertex \
+    import SimpleVirtualApplicationVertex
 from spynnaker.pyNN import exceptions
 
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
@@ -29,7 +29,7 @@ def get_spike_value_from_robot_retina(key):
 
 
 class MunichRetinaDevice(
-        AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
+        SimpleVirtualApplicationVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     # key codes for the robot retina
@@ -71,7 +71,7 @@ class MunichRetinaDevice(
             fixed_n_neurons = 128 * 128
             self._fixed_mask = 0xFFFFC000
 
-        AbstractVirtualVertex.__init__(
+        SimpleVirtualApplicationVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(
