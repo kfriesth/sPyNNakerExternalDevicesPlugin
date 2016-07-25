@@ -12,7 +12,7 @@ from pacman.model.graph.application.simple_virtual_application_vertex \
 from spynnaker.pyNN import exceptions
 
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+from spinn_front_end_common.utility_models.multi_cast_command import MultiCastCommand
 
 
 # robot with 7 7 1

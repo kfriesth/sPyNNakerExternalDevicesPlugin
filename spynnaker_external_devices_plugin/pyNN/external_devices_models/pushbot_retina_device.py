@@ -14,7 +14,7 @@ from spynnaker.pyNN import exceptions
 from pacman.model.graph.application.simple_virtual_application_vertex import \
     SimpleVirtualApplicationVertex
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+from spinn_front_end_common.utility_models.multi_cast_command import MultiCastCommand
 
 
 # Named tuple bundling together configuration elements of a pushbot resolution

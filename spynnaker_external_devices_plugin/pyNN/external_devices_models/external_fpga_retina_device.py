@@ -7,7 +7,7 @@ from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+from spinn_front_end_common.utility_models.multi_cast_command import MultiCastCommand
 from pacman.model.graph.application.simple_virtual_application_vertex \
     import SimpleVirtualApplicationVertex
 from pacman.model.constraints.key_allocator_constraints\
