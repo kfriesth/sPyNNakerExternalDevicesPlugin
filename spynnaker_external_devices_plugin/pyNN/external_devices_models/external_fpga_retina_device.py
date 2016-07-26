@@ -7,9 +7,9 @@ from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
+from spinn_front_end_common.utility_models.multi_cast_command import MultiCastCommand
+from pacman.model.graph.application.simple_virtual_application_vertex \
+    import SimpleVirtualApplicationVertex
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
@@ -58,7 +58,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 
 class ExternalFPGARetinaDevice(
-        AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
+        SimpleVirtualApplicationVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
@@ -127,7 +127,7 @@ class ExternalFPGARetinaDevice(
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
                         .format(fixed_n_neurons))
-        AbstractVirtualVertex.__init__(
+        SimpleVirtualApplicationVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[

@@ -1,13 +1,13 @@
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
+from pacman.model.graph.application.simple_virtual_application_vertex \
+    import SimpleVirtualApplicationVertex
 
 
-class ExternalCochleaDevice(AbstractVirtualVertex):
+class ExternalCochleaDevice(SimpleVirtualApplicationVertex):
 
     def __init__(
             self, n_neurons, spinnaker_link, machine_time_step,
             timescale_factor, label=None):
-        AbstractVirtualVertex.__init__(
+        SimpleVirtualApplicationVertex.__init__(
             self, n_neurons, spinnaker_link, label=label,
             max_atoms_per_core=n_neurons)
 
