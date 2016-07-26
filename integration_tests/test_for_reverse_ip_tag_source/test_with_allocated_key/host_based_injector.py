@@ -96,13 +96,13 @@ class HostBasedInjector(object):
         neuron_id_to_key_mapper = dict()
         for row in cur.execute(
                 "SELECT n.neuron_id, n.key FROM key_to_neuron_mapping as n"
-                " JOIN Partitionable_vertices as p ON n.vertex_id = p.vertex_id"
+                " JOIN Application_vertices as p ON n.vertex_id = p.vertex_id"
                 " WHERE p.vertex_label=\"{}\"".format(self._pop_id)):
             neuron_id_to_key_mapper[row[0]] = row[1]
         return neuron_id_to_key_mapper
 
     def _query_for_max_neurons_for_pop(self, cur):
-        cur.execute("SELECT no_atoms FROM Partitionable_vertices "
+        cur.execute("SELECT no_atoms FROM Application_vertices "
                     "WHERE vertex_label = \"{}\"".format(self._pop_id))
         return cur.fetchone()[0]
 

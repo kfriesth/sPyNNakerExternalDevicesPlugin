@@ -11,10 +11,11 @@ from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
 from spynnaker.pyNN import exceptions
-from pacman.model.abstract_classes.abstract_virtual_vertex import \
-    AbstractVirtualVertex
+from pacman.model.graph.application.simple_virtual_application_vertex import \
+    SimpleVirtualApplicationVertex
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
+from spinn_front_end_common.utility_models.multi_cast_command \
+    import MultiCastCommand
 
 
 # Named tuple bundling together configuration elements of a pushbot resolution
@@ -35,7 +36,7 @@ PushBotRetinaPolarity = IntEnum(
     names=["Up", "Down", "Merged"])
 
 
-class PushBotRetinaDevice(AbstractVirtualVertex,
+class PushBotRetinaDevice(SimpleVirtualApplicationVertex,
                           AbstractSendMeMulticastCommandsVertex,
                           AbstractProvidesOutgoingPartitionConstraints):
 
@@ -98,7 +99,7 @@ class PushBotRetinaDevice(AbstractVirtualVertex,
         # Build routing mask
         self._routing_mask = ~((1 << mask_bits) - 1) & 0xFFFFFFFF
 
-        AbstractVirtualVertex.__init__(
+        SimpleVirtualApplicationVertex.__init__(
             self, fixed_n_neurons, spinnaker_link_id,
             max_atoms_per_core=fixed_n_neurons, label=label)
         AbstractSendMeMulticastCommandsVertex.__init__(

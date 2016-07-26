@@ -9,10 +9,10 @@ from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
 from spinn_front_end_common.utilities import constants
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
-from pacman.model.partitionable_graph.abstract_partitionable_vertex \
-    import AbstractPartitionableVertex
+from pacman.model.graph.application.simple_virtual_application_vertex \
+    import SimpleVirtualApplicationVertex
+from pacman.model.graph.application.abstract_application_vertex \
+    import AbstractApplicationVertex
 
 # front end common imports
 from spinn_front_end_common.abstract_models.abstract_data_specable_vertex\
@@ -29,12 +29,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+MOTOR_PARTITION_ID = "MOTOR"
 
-class _MunichMotorDevice(AbstractVirtualVertex):
+
+class _MunichMotorDevice(SimpleVirtualApplicationVertex):
 
     def __init__(self, spinnaker_link_id):
 
-        AbstractVirtualVertex.__init__(
+        SimpleVirtualApplicationVertex.__init__(
             self, 6, spinnaker_link_id,
             "External Munich Motor", max_atoms_per_core=6)
 
@@ -47,7 +49,7 @@ class _MunichMotorDevice(AbstractVirtualVertex):
 
 
 class MunichMotorDevice(AbstractDataSpecableVertex,
-                        AbstractPartitionableVertex,
+                        AbstractApplicationVertex,
                         AbstractVertexWithEdgeToDependentVertices,
                         AbstractProvidesOutgoingPartitionConstraints):
     """ An Omnibot motor control device - has a real vertex and an external\
@@ -74,9 +76,9 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
 
         AbstractDataSpecableVertex.__init__(self, machine_time_step,
                                             timescale_factor)
-        AbstractPartitionableVertex.__init__(self, 6, label, 6, None)
+        AbstractApplicationVertex.__init__(self, 6, label, 6, None)
         AbstractVertexWithEdgeToDependentVertices.__init__(
-            self, [_MunichMotorDevice(spinnaker_link_id)], None)
+            self, [_MunichMotorDevice(spinnaker_link_id)], MOTOR_PARTITION_ID)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         self._speed = speed
@@ -94,8 +96,8 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         return list([KeyAllocatorFixedMaskConstraint(0xFFFFF800)])
 
     def generate_data_spec(
-            self, subvertex, placement, partitioned_graph, graph,
-            routing_info, hostname, graph_subgraph_mapper,
+            self, vertex, placement, machine_graph, graph,
+            routing_info, hostname, graph_mapper,
             report_folder, ip_tags, reverse_ip_tags,
             write_text_specs, application_run_time_folder):
         """
@@ -117,18 +119,12 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         spec.comment("\n*** Spec for robot motor control ***\n\n")
         self._write_basic_setup_info(spec, self.SYSTEM_REGION)
 
-        # locate correct subedge for key
-        edge_key = None
-        if len(graph.outgoing_edges_from_vertex(self)) != 1:
+        # Get the key
+        edge_key = routing_info.get_first_key_from_pre_vertex(
+            vertex, MOTOR_PARTITION_ID)
+        if edge_key is None:
             raise exceptions.SpynnakerException(
-                "This motor should only have one outgoing edge to the robot")
-
-        partitions = partitioned_graph.\
-            outgoing_edges_partitions_from_vertex(subvertex)
-        for partition in partitions.values():
-            edge_keys_and_masks = \
-                routing_info.get_keys_and_masks_from_partition(partition)
-            edge_key = edge_keys_and_masks[0].key
+                "This motor should have one outgoing edge to the robot")
 
         # write params to memory
         spec.switch_write_focus(region=self.PARAMS_REGION)
