@@ -1,10 +1,11 @@
-from pacman.model.graph.application.simple_application_edge\
-    import SimpleApplicationEdge
+from pacman.model.partitionable_graph.multi_cast_partitionable_edge\
+    import MultiCastPartitionableEdge
 from spinnman.messages.eieio.eieio_type import EIEIOType
 from spynnaker.pyNN import get_spynnaker
-from spynnaker.pyNN.utilities import constants
 from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather
+
+PARTITION_ID = "SPIKE"
 
 
 class SpynnakerExternalDevicePluginManager(object):
@@ -47,14 +48,14 @@ class SpynnakerExternalDevicePluginManager(object):
                 payload_right_shift, number_of_packets_sent_per_time_step,
                 label="LiveSpikeReceiver")
             self._live_spike_recorders[(port, hostname)] = live_spike_recorder
-            _spinnaker.add_application_vertex(live_spike_recorder)
+            _spinnaker.add_partitionable_vertex(live_spike_recorder)
 
         # create the edge and add
-        edge = SimpleApplicationEdge(
+        edge = MultiCastPartitionableEdge(
             vertex_to_record_from, live_spike_recorder, label="recorder_edge")
-        _spinnaker.add_application_edge(edge, constants.SPIKE_PARTITION_ID)
+        _spinnaker.add_partitionable_edge(edge, PARTITION_ID)
 
-    def add_edge(self, vertex, device_vertex, partition_id):
+    def add_edge(self, vertex, device_vertex):
         _spinnaker = get_spynnaker()
-        edge = SimpleApplicationEdge(vertex, device_vertex)
-        _spinnaker.add_application_edge(edge, partition_id)
+        edge = MultiCastPartitionableEdge(vertex, device_vertex)
+        _spinnaker.add_partitionable_edge(edge)
