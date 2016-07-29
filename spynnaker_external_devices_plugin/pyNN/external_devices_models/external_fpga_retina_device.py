@@ -94,12 +94,16 @@ class ExternalFPGARetinaDevice(
         return {}
 
     @staticmethod
-    def state_variables():
+    def state_variables(_):
         return list()
 
     @staticmethod
     def is_array_parameters(_):
         return {}
+
+    @staticmethod
+    def recording_types(_):
+        return []
 
     def __init__(self, bag_of_neurons, label, constraints=None):
         """

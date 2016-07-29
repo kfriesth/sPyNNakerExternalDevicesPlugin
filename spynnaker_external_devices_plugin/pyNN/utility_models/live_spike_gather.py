@@ -37,6 +37,10 @@ class LiveSpikeGather(LivePacketGather):
     def is_array_parameters(_):
         return {}
 
+    @staticmethod
+    def recording_types(_):
+        return []
+
     model_name = "LiveSpikeInjector"
 
     def __init__(self, bag_of_neurons, label, constraints):

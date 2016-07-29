@@ -46,6 +46,10 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
     def is_array_parameters(_):
         return {}
 
+    @staticmethod
+    def recording_types(_):
+        return []
+
     model_name = "SpikeInjector"
 
     def __init__(
