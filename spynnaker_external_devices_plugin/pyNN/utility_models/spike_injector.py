@@ -25,9 +25,8 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             virtual_key=virtual_key)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
-    def get_outgoing_partition_constraints(
-            self, partition, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition):
         constraints = ReverseIpTagMultiCastSource\
-            .get_outgoing_partition_constraints(self, partition, graph_mapper)
+            .get_outgoing_partition_constraints(self, partition)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints
