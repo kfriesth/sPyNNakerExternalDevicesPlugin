@@ -1,19 +1,23 @@
-from pacman.model.graph.application.simple_virtual_application_vertex \
-    import SimpleVirtualApplicationVertex
+from pacman.model.constraints.partitioner_constraints.\
+    partitioner_maximum_size_constraint import \
+    PartitionerMaximumSizeConstraint
+from pacman.model.decorators.overrides import overrides
+from pacman.model.graphs.application.impl.application_virtual_vertex import \
+    ApplicationVirtualVertex
 
 
-class ExternalCochleaDevice(SimpleVirtualApplicationVertex):
+class ExternalCochleaDevice(ApplicationVirtualVertex):
+    """
+    cochlea device connected via spinnaker link
+    """
 
     def __init__(
-            self, n_neurons, spinnaker_link, machine_time_step,
-            timescale_factor, label=None):
-        SimpleVirtualApplicationVertex.__init__(
-            self, n_neurons, spinnaker_link, label=label,
-            max_atoms_per_core=n_neurons)
+            self, n_neurons, spinnaker_link, label=None):
+        ApplicationVirtualVertex.__init__(
+            self, n_neurons, spinnaker_link, label,
+            [PartitionerMaximumSizeConstraint(n_neurons)])
 
     @property
+    @overrides(ApplicationVirtualVertex.model_name)
     def model_name(self):
         return "ExternalCochleaDevice:{}".format(self.label)
-
-    def is_virtual_vertex(self):
-        return True
