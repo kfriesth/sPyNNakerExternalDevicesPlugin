@@ -7,6 +7,7 @@ and implementation for the PyNN High-level API
 import os
 
 from spinnman.messages.eieio.eieio_type import EIEIOType
+from spynnaker.pyNN.utilities import constants
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     external_cochlea_device import ExternalCochleaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
@@ -30,7 +31,6 @@ from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
 from spynnaker_external_devices_plugin.pyNN.connections\
     .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 from spynnaker.pyNN.utilities import conf
-from spynnaker.pyNN import IF_curr_exp
 from spynnaker.pyNN.spinnaker import executable_finder
 from spinn_front_end_common.utilities.notification_protocol.socket_address \
     import SocketAddress
@@ -120,7 +120,7 @@ def activate_live_output_for(
         use_prefix, key_prefix, prefix_type, message_type, right_shift,
         payload_as_time_stamps, use_payload_prefix, payload_prefix,
         payload_right_shift, number_of_packets_sent_per_time_step)
-    # build the database socket address used by the notifcation interface
+    # build the database socket address used by the notification interface
     database_socket = SocketAddress(
         listen_port=database_ack_port_num,
         notify_host_name=database_notify_host,
@@ -139,22 +139,18 @@ def activate_live_output_to(population, device):
                 will be sent.
     """
     spynnaker_external_devices.add_edge(
-        population._get_vertex, device._get_vertex)
+        population._get_vertex, device._get_vertex,
+        constants.SPIKE_PARTITION_ID)
 
 
 def SpikeInjector(
-        n_neurons, machine_time_step, timescale_factor, label, port,
+        n_neurons, label, port,
         virtual_key=None, database_notify_host=None,
         database_notify_port_num=None, database_ack_port_num=None):
     """ Supports adding a spike injector to the application graph.
 
     :param n_neurons: the number of neurons the spike injector will emulate
     :type n_neurons: int
-    :param machine_time_step: the time period in ms for each timer callback
-    :type machine_time_step: int
-    :param timescale_factor: the amount of scaling needed of the machine time\
-            step (basically a slow down function)
-    :type timescale_factor: int
     :param label: the label given to the population
     :type label: str
     :param port: the port number used to listen for injections of spikes
@@ -193,6 +189,7 @@ def SpikeInjector(
     # update socket interface with new demands.
     spynnaker_external_devices.add_socket_address(database_socket)
     return SpynnakerExternalDeviceSpikeInjector(
-        n_neurons=n_neurons, machine_time_step=machine_time_step,
-        timescale_factor=timescale_factor, label=label, port=port,
-        virtual_key=virtual_key)
+        n_neurons=n_neurons,
+        machine_time_step=spynnaker_external_devices.machine_time_step(),
+        timescale_factor=spynnaker_external_devices.time_scale_factor(),
+        label=label, port=port, virtual_key=virtual_key)
