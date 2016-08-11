@@ -1,3 +1,4 @@
+from pacman.model.decorators.overrides import overrides
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
@@ -23,8 +24,11 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
             self, n_keys=n_neurons, machine_time_step=machine_time_step,
             timescale_factor=timescale_factor, label=label, receive_port=port,
             virtual_key=virtual_key)
+
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
+    @overrides(AbstractProvidesOutgoingPartitionConstraints.
+               get_outgoing_partition_constraints)
     def get_outgoing_partition_constraints(self, partition):
         constraints = ReverseIpTagMultiCastSource\
             .get_outgoing_partition_constraints(self, partition)
