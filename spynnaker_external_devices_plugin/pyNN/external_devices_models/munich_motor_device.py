@@ -66,7 +66,6 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
     SYSTEM_REGION = 0
     PARAMS_REGION = 1
 
-    SYSTEM_SIZE = 4 * 4
     PARAMS_SIZE = 7 * 4
 
     def __init__(
@@ -177,7 +176,7 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
         # Reserve memory:
         spec.reserve_memory_region(
             region=self.SYSTEM_REGION,
-            size=constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4,
+            size=constants.SYSTEM_BYTES_REQUIREMENT,
             label='setup')
 
         spec.reserve_memory_region(region=self.PARAMS_REGION,
@@ -194,7 +193,7 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
         sdram calc
         :return:
         """
-        return self.SYSTEM_SIZE + self.PARAMS_SIZE
+        return constants.SYSTEM_BYTES_REQUIREMENT + self.PARAMS_SIZE
 
     @staticmethod
     def get_dtcm_usage_for_atoms():
