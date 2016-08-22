@@ -1,5 +1,6 @@
 import logging
-from pacman.model.constraints.partitioner_constraints.partitioner_maximum_size_constraint import \
+from pacman.model.constraints.partitioner_constraints\
+    .partitioner_maximum_size_constraint import \
     PartitionerMaximumSizeConstraint
 from pacman.model.decorators.overrides import overrides
 
@@ -144,8 +145,3 @@ class ExternalFPGARetinaDevice(
     def get_outgoing_partition_constraints(self, partition):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
-
-    @property
-    @overrides(ApplicationVirtualVertex.model_name)
-    def model_name(self):
-        return "external FPGA retina device"

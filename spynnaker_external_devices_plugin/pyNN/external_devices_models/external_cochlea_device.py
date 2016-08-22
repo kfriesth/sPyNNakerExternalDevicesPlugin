@@ -16,8 +16,3 @@ class ExternalCochleaDevice(ApplicationVirtualVertex):
         ApplicationVirtualVertex.__init__(
             self, n_neurons, spinnaker_link, label,
             [PartitionerMaximumSizeConstraint(n_neurons)])
-
-    @property
-    @overrides(ApplicationVirtualVertex.model_name)
-    def model_name(self):
-        return "ExternalCochleaDevice:{}".format(self.label)

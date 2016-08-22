@@ -18,19 +18,22 @@ from spynnaker.pyNN import exceptions
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
-from spinn_front_end_common.utilities import constants
 from pacman.model.graphs.application.impl.application_virtual_vertex \
     import ApplicationVirtualVertex
 from pacman.model.graphs.application.impl.application_vertex import \
     ApplicationVertex
 
 # front end common imports
-from spinn_front_end_common.abstract_models.impl.\
-    application_uses_simulation_data_specable_vertex \
-    import ApplicationUsesSimulationDataSpecableVertex
+
+from spinn_front_end_common.abstract_models.impl\
+    .application_data_specable_vertex import ApplicationDataSpecableVertex
+from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
+    import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_provides_outgoing_partition_constraints\
     import AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utilities import constants
+from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # general imports
 import logging
@@ -49,16 +52,11 @@ class _MunichMotorDevice(ApplicationVirtualVertex):
             "External Munich Motor",
             constraints=[PartitionerMaximumSizeConstraint(6)])
 
-    @property
-    @overrides(ApplicationVirtualVertex.model_name)
-    def model_name(self):
-        return "external motor device"
 
-
-class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
-                        ApplicationVertex,
-                        AbstractVertexWithEdgeToDependentVertices,
-                        AbstractProvidesOutgoingPartitionConstraints):
+class MunichMotorDevice(
+        ApplicationDataSpecableVertex, AbstractHasAssociatedBinary,
+        ApplicationVertex, AbstractVertexWithEdgeToDependentVertices,
+        AbstractProvidesOutgoingPartitionConstraints):
     """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
@@ -69,10 +67,9 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
     PARAMS_SIZE = 7 * 4
 
     def __init__(
-            self, n_neurons, machine_time_step, timescale_factor,
-            spinnaker_link_id, speed=30, sample_time=4096, update_time=512,
-            delay_time=5, delta_threshold=23, continue_if_not_different=True,
-            label="RobotMotorControl"):
+            self, n_neurons, spinnaker_link_id, speed=30, sample_time=4096,
+            update_time=512, delay_time=5, delta_threshold=23,
+            continue_if_not_different=True, label="RobotMotorControl"):
         """
         """
 
@@ -80,8 +77,6 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
             logger.warn("The specified number of neurons for the munich motor"
                         " device has been ignored; 6 will be used instead")
 
-        ApplicationUsesSimulationDataSpecableVertex.__init__(
-            self, machine_time_step, timescale_factor)
         ApplicationVertex.__init__(self, label)
         AbstractVertexWithEdgeToDependentVertices.__init__(
             self, [_MunichMotorDevice(spinnaker_link_id)], MOTOR_PARTITION_ID)
@@ -107,10 +102,9 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
     @overrides(ApplicationVertex.get_resources_used_by_atoms)
     def get_resources_used_by_atoms(self, vertex_slice):
         return ResourceContainer(
-            sdram=SDRAMResource(self.get_sdram_usage_for_atoms()),
-            dtcm=DTCMResource(self.get_dtcm_usage_for_atoms()),
-            cpu_cycles=CPUCyclesPerTickResource(
-                self.get_cpu_usage_for_atoms()))
+            sdram=SDRAMResource(
+                constants.SYSTEM_BYTES_REQUIREMENT + self.PARAMS_SIZE),
+            dtcm=DTCMResource(0), cpu_cycles=CPUCyclesPerTickResource(0))
 
     @overrides(AbstractProvidesOutgoingPartitionConstraints.
                get_outgoing_partition_constraints)
@@ -121,11 +115,12 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
         # and the management bit anyway
         return list([KeyAllocatorFixedMaskConstraint(0xFFFFF800)])
 
-    @overrides(ApplicationUsesSimulationDataSpecableVertex.
+    @overrides(ApplicationDataSpecableVertex.
                generate_application_data_specification)
     def generate_application_data_specification(
             self, spec, placement, graph_mapper, application_graph,
-            machine_graph, routing_info, iptags, reverse_iptags):
+            machine_graph, routing_info, iptags, reverse_iptags,
+            machine_time_step, time_scale_factor):
 
         # reserve regions
         self.reserve_memory_regions(spec)
@@ -135,7 +130,9 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
 
         # handle simulation data
         spec.switch_write_focus(self.SYSTEM_REGION)
-        spec.write_array(self.data_for_simulation_data())
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
 
         # Get the key
         edge_key = routing_info.get_first_key_from_pre_vertex(
@@ -160,7 +157,7 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
         # End-of-Spec:
         spec.end_specification()
 
-    @overrides(ApplicationUsesSimulationDataSpecableVertex.get_binary_file_name)
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "robot_motor_control.aplx"
 
@@ -182,47 +179,3 @@ class MunichMotorDevice(ApplicationUsesSimulationDataSpecableVertex,
         spec.reserve_memory_region(region=self.PARAMS_REGION,
                                    size=self.PARAMS_SIZE,
                                    label='params')
-
-    @property
-    @overrides(ApplicationVertex.model_name)
-    def model_name(self):
-        return "Munich Motor Control"
-
-    def get_sdram_usage_for_atoms(self):
-        """
-        sdram calc
-        :return:
-        """
-        return constants.SYSTEM_BYTES_REQUIREMENT + self.PARAMS_SIZE
-
-    @staticmethod
-    def get_dtcm_usage_for_atoms():
-        """
-        dtcm calc
-        :return:
-        """
-        return 0
-
-    @staticmethod
-    def get_cpu_usage_for_atoms():
-        """
-        cpu calc
-        :return:
-        """
-        return 0
-
-    @overrides(AbstractVertexWithEdgeToDependentVertices.has_dependent_vertices)
-    def has_dependent_vertices(self):
-        """
-
-        :return:
-        """
-        return True
-
-    @overrides(AbstractVertexWithEdgeToDependentVertices.
-               edge_partition_identifier_for_dependent_edge)
-    def edge_partition_identifier_for_dependent_edge(self):
-        """
-        :return:
-        """
-        return MOTOR_PARTITION_ID

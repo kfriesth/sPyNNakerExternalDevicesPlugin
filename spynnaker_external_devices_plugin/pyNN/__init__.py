@@ -189,7 +189,4 @@ def SpikeInjector(
     # update socket interface with new demands.
     spynnaker_external_devices.add_socket_address(database_socket)
     return SpynnakerExternalDeviceSpikeInjector(
-        n_neurons=n_neurons,
-        machine_time_step=spynnaker_external_devices.machine_time_step(),
-        timescale_factor=spynnaker_external_devices.time_scale_factor(),
-        label=label, port=port, virtual_key=virtual_key)
+        n_neurons=n_neurons, label=label, port=port, virtual_key=virtual_key)

@@ -65,7 +65,6 @@ class SpynnakerExternalDevicePluginManager(object):
         else:
 
             live_spike_recorder = LivePacketGather(
-                _spinnaker.machine_time_step, _spinnaker.timescale_factor,
                 hostname, port, board_address, tag, strip_sdp, use_prefix,
                 key_prefix, prefix_type, message_type, right_shift,
                 payload_as_time_stamps, use_payload_prefix, payload_prefix,

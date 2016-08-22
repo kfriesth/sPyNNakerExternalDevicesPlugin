@@ -166,8 +166,3 @@ class PushBotRetinaDevice(ApplicationVirtualVertex,
             1, 100))
 
         return commands
-
-    @property
-    @overrides(ApplicationVirtualVertex.model_name)
-    def model_name(self):
-        return "pushbot retina device"

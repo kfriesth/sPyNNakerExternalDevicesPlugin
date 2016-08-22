@@ -16,13 +16,10 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
         to specify the virtual_key of the population to identify the population
     """
 
-    def __init__(
-            self, n_neurons, machine_time_step, timescale_factor, label, port,
-            virtual_key=None):
+    def __init__(self, n_neurons, label, port, virtual_key=None):
 
         ReverseIpTagMultiCastSource.__init__(
-            self, n_keys=n_neurons, machine_time_step=machine_time_step,
-            timescale_factor=timescale_factor, label=label, receive_port=port,
+            self, n_keys=n_neurons, label=label, receive_port=port,
             virtual_key=virtual_key)
 
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)

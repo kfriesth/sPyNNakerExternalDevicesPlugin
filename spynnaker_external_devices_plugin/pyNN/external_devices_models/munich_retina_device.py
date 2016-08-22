@@ -1,4 +1,5 @@
-from pacman.model.constraints.partitioner_constraints.partitioner_maximum_size_constraint import \
+from pacman.model.constraints.partitioner_constraints\
+    .partitioner_maximum_size_constraint import \
     PartitionerMaximumSizeConstraint
 from pacman.model.decorators.overrides import overrides
 from spinn_front_end_common.abstract_models.\
@@ -124,7 +125,7 @@ class MunichRetinaDevice(
             0, key_set_command, self.MANAGEMENT_MASK, key_set_payload,
             5, 1000))
 
-        # make retina enabled (dependant on if its a left or right retina
+        # make retina enabled (depending on if its a left or right retina
         if position == self.RIGHT_RETINA:
             enable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_ENABLE
         else:
@@ -142,10 +143,3 @@ class MunichRetinaDevice(
             -1, disable_command, self.MANAGEMENT_MASK, 0, 5, 1000))
 
         return commands
-
-    @property
-    @overrides(ApplicationVirtualVertex.model_name)
-    def model_name(self):
-        return "external retina device at " \
-               "_position {} and _polarity {}".format(self._position,
-                                                      self._polarity)
