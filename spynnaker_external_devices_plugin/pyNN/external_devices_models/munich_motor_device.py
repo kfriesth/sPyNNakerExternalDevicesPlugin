@@ -18,6 +18,8 @@ from spynnaker.pyNN import exceptions
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
+from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable\
+    import AbstractChipRuntimeUpdatable
 from pacman.model.graphs.application.impl.application_virtual_vertex \
     import ApplicationVirtualVertex
 from pacman.model.graphs.application.impl.application_vertex import \
@@ -56,7 +58,8 @@ class _MunichMotorDevice(ApplicationVirtualVertex):
 class MunichMotorDevice(
         ApplicationDataSpecableVertex, AbstractHasAssociatedBinary,
         ApplicationVertex, AbstractVertexWithEdgeToDependentVertices,
-        AbstractProvidesOutgoingPartitionConstraints):
+        AbstractProvidesOutgoingPartitionConstraints,
+        AbstractChipRuntimeUpdatable):
     """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
