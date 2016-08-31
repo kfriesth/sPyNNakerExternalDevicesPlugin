@@ -1,14 +1,12 @@
 from pacman.model.constraints.partitioner_constraints.\
     partitioner_maximum_size_constraint import \
     PartitionerMaximumSizeConstraint
-from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.application.impl.application_virtual_vertex import \
     ApplicationVirtualVertex
 
 
 class ExternalCochleaDevice(ApplicationVirtualVertex):
-    """
-    cochlea device connected via spinnaker link
+    """ Cochlea device connected via spinnaker link
     """
 
     def __init__(

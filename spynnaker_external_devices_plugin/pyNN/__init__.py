@@ -1,5 +1,5 @@
 """
-The :py:mod:`spynnaker.pynn` package contains the frontend specifications
+The :py:mod:`spynnaker.pynn` package contains the front end specifications
 and implementation for the PyNN High-level API
 (http://neuralensemble.org/trac/PyNN)
 """
@@ -56,8 +56,8 @@ def activate_live_output_for(
             listening to the database notification.
     :type database_notify_host: str
     :param database_ack_port_num: the port number to which a external device\
-            will ack that they have finished reading the database and are\
-            ready for it to start execution
+            will acknowledge that they have finished reading the database and\
+            are ready for it to start execution
     :type database_ack_port_num: int
     :param database_notify_port_num: The port number to which a external\
             device will receive the database is ready command
@@ -161,8 +161,8 @@ def SpikeInjector(
             listening to the database notification.
     :type database_notify_host: str
     :param database_ack_port_num: the port number to which a external device\
-            will ack that they have finished reading the database and are\
-            ready for it to start execution
+            will acknowledge that they have finished reading the database and\
+            are ready for it to start execution
     :type database_ack_port_num: int
     :param database_notify_port_num: The port number to which a external\
             device will receive the database is ready command

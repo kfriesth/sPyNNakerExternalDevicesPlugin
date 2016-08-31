@@ -1,6 +1,7 @@
 from collections import namedtuple
 from enum import Enum, IntEnum
-from pacman.model.constraints.partitioner_constraints.partitioner_maximum_size_constraint import \
+from pacman.model.constraints.partitioner_constraints\
+    .partitioner_maximum_size_constraint import \
     PartitionerMaximumSizeConstraint
 from pacman.model.decorators.overrides import overrides
 
@@ -42,8 +43,7 @@ PushBotRetinaPolarity = IntEnum(
 class PushBotRetinaDevice(ApplicationVirtualVertex,
                           AbstractSendMeMulticastCommandsVertex,
                           AbstractProvidesOutgoingPartitionConstraints):
-    """
-    the pushbot model (NEEDS VERIFICATION)
+    """ The pushbot model (NEEDS VERIFICATION)
     """
 
     # Mask for all SpiNNaker->Pushbot commands
