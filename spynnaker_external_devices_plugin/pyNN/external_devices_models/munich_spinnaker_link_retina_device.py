@@ -17,7 +17,7 @@ from pacman.model.constraints.key_allocator_constraints\
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 
 #external devices plugin imports
-from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+from pacman.model.graphs.abstract_spinnaker_link_vertex import \
     AbstractSpiNNakerLinkVertex
 
 # robot with 7 7 1

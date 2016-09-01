@@ -1,6 +1,6 @@
 import logging
 
-from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+from pacman.model.graphs.abstract_spinnaker_link_vertex import \
     AbstractSpiNNakerLinkVertex
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \

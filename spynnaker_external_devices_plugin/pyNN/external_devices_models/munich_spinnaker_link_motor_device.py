@@ -27,7 +27,7 @@ from data_specification.data_specification_generator import \
 import logging
 
 # external devices imports
-from pacman.model.abstract_classes.abstract_spinnaker_link_vertex import \
+from pacman.model.graphs.abstract_spinnaker_link_vertex import \
     AbstractSpiNNakerLinkVertex
 
 logger = logging.getLogger(__name__)

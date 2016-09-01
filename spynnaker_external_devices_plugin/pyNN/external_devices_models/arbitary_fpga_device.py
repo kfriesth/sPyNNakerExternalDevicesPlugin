@@ -1,7 +1,7 @@
 # pacman imports
 
 # external devices imports
-from pacman.model.abstract_classes.abstract_fpga_vertex\
+from pacman.model.graphs.abstract_fpga_vertex\
     import AbstractFPGAVertex
 
 # general imports
@@ -21,4 +21,4 @@ class ArbitaryFPGADevice(AbstractFPGAVertex):
 
     @property
     def model_name(self):
-        return "ArbitarySATADevice:{}".format(self.label)
+        return "ArbitaryFPGADevice:{}".format(self.label)
