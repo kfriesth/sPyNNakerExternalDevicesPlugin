@@ -14,4 +14,4 @@ class ArbitaryFPGADevice(ApplicationFPGAVertex):
             self, n_neurons, fpga_link_id, fpga_id, board_address=None,
             label=None):
         ApplicationFPGAVertex.__init__(
-            self, n_neurons, fpga_link_id, fpga_id, board_address, label)
+            self, n_neurons, fpga_id, fpga_link_id, board_address, label)

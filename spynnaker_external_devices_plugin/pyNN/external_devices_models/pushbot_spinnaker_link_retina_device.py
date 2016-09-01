@@ -118,7 +118,7 @@ class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
             print "Warning, the retina will have {} neurons".format(
                 fixed_n_neurons)
 
-    def get_outgoing_partition_constraints(self, partition, graph_mapper):
+    def get_outgoing_partition_constraints(self, partition):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._routing_key, self._routing_mask)])]
 
