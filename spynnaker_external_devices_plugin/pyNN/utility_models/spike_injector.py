@@ -1,3 +1,4 @@
+from pacman.model.decorators.overrides import overrides
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
@@ -15,19 +16,18 @@ class SpikeInjector(ReverseIpTagMultiCastSource,
         to specify the virtual_key of the population to identify the population
     """
 
-    def __init__(
-            self, n_neurons, machine_time_step, timescale_factor, label, port,
-            virtual_key=None):
+    def __init__(self, n_neurons, label, port, virtual_key=None):
 
         ReverseIpTagMultiCastSource.__init__(
-            self, n_keys=n_neurons, machine_time_step=machine_time_step,
-            timescale_factor=timescale_factor, label=label, receive_port=port,
+            self, n_keys=n_neurons, label=label, receive_port=port,
             virtual_key=virtual_key)
+
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
-    def get_outgoing_partition_constraints(
-            self, partition, graph_mapper):
+    @overrides(AbstractProvidesOutgoingPartitionConstraints.
+               get_outgoing_partition_constraints)
+    def get_outgoing_partition_constraints(self, partition):
         constraints = ReverseIpTagMultiCastSource\
-            .get_outgoing_partition_constraints(self, partition, graph_mapper)
+            .get_outgoing_partition_constraints(self, partition)
         constraints.append(KeyAllocatorContiguousRangeContraint())
         return constraints

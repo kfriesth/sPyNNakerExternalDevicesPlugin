@@ -1,4 +1,8 @@
 import logging
+from pacman.model.constraints.partitioner_constraints\
+    .partitioner_maximum_size_constraint import \
+    PartitionerMaximumSizeConstraint
+from pacman.model.decorators.overrides import overrides
 
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
@@ -7,9 +11,10 @@ from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
-from pacman.model.abstract_classes.abstract_virtual_vertex \
-    import AbstractVirtualVertex
+from spinn_front_end_common.utility_models.multi_cast_command \
+    import MultiCastCommand
+from pacman.model.graphs.application.impl.application_virtual_vertex \
+    import ApplicationVirtualVertex
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
@@ -58,7 +63,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 
 class ExternalFPGARetinaDevice(
-        AbstractVirtualVertex, AbstractSendMeMulticastCommandsVertex,
+        ApplicationVirtualVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
@@ -71,7 +76,7 @@ class ExternalFPGARetinaDevice(
 
     def __init__(
             self, mode, retina_key, spinnaker_link_id, polarity,
-            machine_time_step, timescale_factor, label=None, n_neurons=None):
+            label=None, n_neurons=None):
         """
         :param mode: The retina "mode"
         :param retina_key: The value of the top 16-bits of the key
@@ -121,30 +126,22 @@ class ExternalFPGARetinaDevice(
                 fixed_n_neurons = 16 * 16 * 2
         else:
             raise exceptions.SpynnakerException("the FPGA retina does not "
-                                                "recongise this mode")
+                                                "recognise this mode")
 
         if fixed_n_neurons != n_neurons and n_neurons is not None:
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
                         .format(fixed_n_neurons))
-        AbstractVirtualVertex.__init__(
-            self, fixed_n_neurons, spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label)
+        ApplicationVirtualVertex.__init__(
+            self, fixed_n_neurons, spinnaker_link_id, label=label,
+            constraints=[PartitionerMaximumSizeConstraint(fixed_n_neurons)])
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
             MultiCastCommand(0, 0x0000FFFF, 0xFFFF0000, 1, 5, 100),
             MultiCastCommand(-1, 0x0000FFFE, 0xFFFF0000, 0, 5, 100)])
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
-    def get_outgoing_partition_constraints(self, partition, graph_mapper):
+    @overrides(AbstractProvidesOutgoingPartitionConstraints.
+               get_outgoing_partition_constraints)
+    def get_outgoing_partition_constraints(self, partition):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
-
-    @property
-    def model_name(self):
-        return "external FPGA retina device"
-
-    def is_virtual_vertex(self):
-        return True
-
-    def recieves_multicast_commands(self):
-        return True
