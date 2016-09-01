@@ -9,11 +9,12 @@ from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utility_models.multi_cast_command \
+    import MultiCastCommand
 from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +72,7 @@ class ExternalFPGARetinaDevice(
 
     def __init__(
             self, mode, retina_key, spinnaker_link_id, polarity,
-            machine_time_step, timescale_factor, label=None, n_neurons=None,
-            board_address=None):
+            label=None, n_neurons=None, board_address=None):
         """
         :param mode: The retina "mode"
         :param retina_key: The value of the top 16-bits of the key
@@ -121,8 +121,8 @@ class ExternalFPGARetinaDevice(
             else:
                 fixed_n_neurons = 16 * 16 * 2
         else:
-            raise exceptions.SpynnakerException("the FPGA retina does not "
-                                                "recongise this mode")
+            raise exceptions.SpynnakerException(
+                "the FPGA retina does not recognise this mode")
 
         if fixed_n_neurons != n_neurons and n_neurons is not None:
             logger.warn("The specified number of neurons for the FPGA retina"

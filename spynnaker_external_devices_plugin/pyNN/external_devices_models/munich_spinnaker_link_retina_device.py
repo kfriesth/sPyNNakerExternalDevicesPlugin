@@ -2,21 +2,20 @@
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utility_models.multi_cast_command \
+    import MultiCastCommand
 
-# pynn improts
+# pynn imports
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
-#pacman imports
+# pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-
-#external devices plugin imports
 from pacman.model.graphs.abstract_spinnaker_link_vertex import \
     AbstractSpiNNakerLinkVertex
 
@@ -57,9 +56,8 @@ class MunichRetinaDevice(
     RIGHT_RETINA = "RIGHT"
 
     def __init__(
-            self, retina_key, spinnaker_link_id, position, machine_time_step,
-            timescale_factor, label=None, n_neurons=None, polarity=None,
-            board_address=None):
+            self, retina_key, spinnaker_link_id, position,
+            label=None, n_neurons=None, polarity=None, board_address=None):
 
         if polarity is None:
             polarity = MunichRetinaDevice.MERGED_POLARITY
@@ -124,7 +122,7 @@ class MunichRetinaDevice(
             0, key_set_command, self.MANAGEMENT_MASK, key_set_payload,
             5, 1000))
 
-        # make retina enabled (dependant on if its a left or right retina
+        # make retina enabled (dependent on if its a left or right retina
         if position == self.RIGHT_RETINA:
             enable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_ENABLE
         else:

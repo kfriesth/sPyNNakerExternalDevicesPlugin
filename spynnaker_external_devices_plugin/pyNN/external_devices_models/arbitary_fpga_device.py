@@ -13,11 +13,10 @@ from six import add_metaclass
 class ArbitaryFPGADevice(AbstractFPGAVertex):
 
     def __init__(
-            self, n_neurons, fpga_link_id, fpga_id, machine_time_step,
-            timescale_factor, board_address=None, label=None):
+            self, n_neurons, fpga_link_id, fpga_id, board_address=None,
+            label=None):
         AbstractFPGAVertex.__init__(
-            self, n_neurons, fpga_link_id, fpga_id, machine_time_step,
-            timescale_factor, board_address, label)
+            self, n_neurons, fpga_link_id, fpga_id, board_address, label)
 
     @property
     def model_name(self):

@@ -8,29 +8,37 @@ from spynnaker.pyNN.models.abstract_models\
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
-from pacman.model.partitionable_graph.abstract_partitionable_vertex \
-    import AbstractPartitionableVertex
+from pacman.model.graphs.abstract_spinnaker_link_vertex import \
+    AbstractSpiNNakerLinkVertex
+from pacman.model.graphs.application.impl.application_vertex \
+    import ApplicationVertex
+from pacman.model.decorators.overrides import overrides
+from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.resources.dtcm_resource import DTCMResource
+from pacman.model.resources.cpu_cycles_per_tick_resource \
+    import CPUCyclesPerTickResource
 
 # front end common imports
-from spinn_front_end_common.abstract_models.abstract_data_specable_vertex\
-    import AbstractDataSpecableVertex
 from spinn_front_end_common.abstract_models\
     .abstract_provides_outgoing_partition_constraints\
     import AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.utilities import constants
-
-# dsg imports
-from data_specification.data_specification_generator import \
-    DataSpecificationGenerator
+from spinn_front_end_common.abstract_models.impl\
+    .application_data_specable_vertex import ApplicationDataSpecableVertex
+from spinn_front_end_common.abstract_models\
+    .abstract_has_associated_binary import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
+from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # general imports
 import logging
 
-# external devices imports
-from pacman.model.graphs.abstract_spinnaker_link_vertex import \
-    AbstractSpiNNakerLinkVertex
-
 logger = logging.getLogger(__name__)
+
+MOTOR_PARTITION_ID = "MOTOR"
 
 
 class _MunichMotorDevice(AbstractSpiNNakerLinkVertex):
@@ -50,10 +58,11 @@ class _MunichMotorDevice(AbstractSpiNNakerLinkVertex):
         return True
 
 
-class MunichMotorDevice(AbstractDataSpecableVertex,
-                        AbstractPartitionableVertex,
-                        AbstractVertexWithEdgeToDependentVertices,
-                        AbstractProvidesOutgoingPartitionConstraints):
+class MunichMotorDevice(
+        ApplicationDataSpecableVertex, AbstractHasAssociatedBinary,
+        ApplicationVertex, AbstractVertexWithEdgeToDependentVertices,
+        AbstractProvidesOutgoingPartitionConstraints,
+        AbstractBinaryUsesSimulationRun):
     """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
@@ -61,14 +70,12 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
     SYSTEM_REGION = 0
     PARAMS_REGION = 1
 
-    SYSTEM_SIZE = 4 * 4
     PARAMS_SIZE = 7 * 4
 
     def __init__(
-            self, n_neurons, machine_time_step, timescale_factor,
-            spinnaker_link_id, speed=30, sample_time=4096, update_time=512,
-            delay_time=5, delta_threshold=23, continue_if_not_different=True,
-            label="RobotMotorControl"):
+            self, n_neurons, spinnaker_link_id, speed=30, sample_time=4096,
+            update_time=512, delay_time=5, delta_threshold=23,
+            continue_if_not_different=True, label="RobotMotorControl"):
         """
         """
 
@@ -76,11 +83,9 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
             logger.warn("The specified number of neurons for the munich motor"
                         " device has been ignored; 6 will be used instead")
 
-        AbstractDataSpecableVertex.__init__(self, machine_time_step,
-                                            timescale_factor)
-        AbstractPartitionableVertex.__init__(self, 6, label, 6, None)
+        ApplicationVertex.__init__(self, label)
         AbstractVertexWithEdgeToDependentVertices.__init__(
-            self, [_MunichMotorDevice(spinnaker_link_id)], None)
+            self, [_MunichMotorDevice(spinnaker_link_id)], MOTOR_PARTITION_ID)
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         self._speed = speed
@@ -90,49 +95,57 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         self._delta_threshold = delta_threshold
         self._continue_if_not_different = continue_if_not_different
 
-    def get_outgoing_partition_constraints(self, partition, graph_mapper):
+    @property
+    @overrides(ApplicationVertex.n_atoms)
+    def n_atoms(self):
+        return 6
+
+    @overrides(ApplicationVertex.create_machine_vertex)
+    def create_machine_vertex(self, vertex_slice, resources_required,
+                              label=None, constraints=None):
+        return MachineVertex(resources_required, label, constraints)
+
+    @overrides(ApplicationVertex.get_resources_used_by_atoms)
+    def get_resources_used_by_atoms(self, vertex_slice):
+        return ResourceContainer(
+            sdram=SDRAMResource(
+                constants.SYSTEM_BYTES_REQUIREMENT + self.PARAMS_SIZE),
+            dtcm=DTCMResource(0), cpu_cycles=CPUCyclesPerTickResource(0))
+
+    @overrides(AbstractProvidesOutgoingPartitionConstraints.
+               get_outgoing_partition_constraints)
+    def get_outgoing_partition_constraints(self, partition):
 
         # Any key to the device will work, as long as it doesn't set the
         # management bit.  We also need enough for the configuration bits
         # and the management bit anyway
         return list([KeyAllocatorFixedMaskConstraint(0xFFFFF800)])
 
-    def generate_data_spec(
-            self, subvertex, placement, partitioned_graph, graph,
-            routing_info, hostname, graph_subgraph_mapper,
-            report_folder, ip_tags, reverse_ip_tags,
-            write_text_specs, application_run_time_folder):
-        """
-        Model-specific construction of the data blocks necessary to build a
-        single external retina device.
-        """
-        # Create new DataSpec for this processor:
-        data_writer, report_writer = \
-            self.get_data_spec_file_writers(
-                placement.x, placement.y, placement.p, hostname, report_folder,
-                write_text_specs, application_run_time_folder)
-
-        spec = DataSpecificationGenerator(data_writer, report_writer)
+    @overrides(ApplicationDataSpecableVertex.
+               generate_application_data_specification)
+    def generate_application_data_specification(
+            self, spec, placement, graph_mapper, application_graph,
+            machine_graph, routing_info, iptags, reverse_iptags,
+            machine_time_step, time_scale_factor):
 
         # reserve regions
         self.reserve_memory_regions(spec)
 
         # Write the setup region
         spec.comment("\n*** Spec for robot motor control ***\n\n")
-        self._write_basic_setup_info(spec, self.SYSTEM_REGION)
 
-        # locate correct subedge for key
-        edge_key = None
-        if len(graph.outgoing_edges_from_vertex(self)) != 1:
+        # handle simulation data
+        spec.switch_write_focus(self.SYSTEM_REGION)
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
+
+        # Get the key
+        edge_key = routing_info.get_first_key_from_pre_vertex(
+            placement.vertex, MOTOR_PARTITION_ID)
+        if edge_key is None:
             raise exceptions.SpynnakerException(
-                "This motor should only have one outgoing edge to the robot")
-
-        partitions = partitioned_graph.\
-            outgoing_edges_partitions_from_vertex(subvertex)
-        for partition in partitions.values():
-            edge_keys_and_masks = \
-                routing_info.get_keys_and_masks_from_partition(partition)
-            edge_key = edge_keys_and_masks[0].key
+                "This motor should have one outgoing edge to the robot")
 
         # write params to memory
         spec.switch_write_focus(region=self.PARAMS_REGION)
@@ -149,11 +162,8 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
 
         # End-of-Spec:
         spec.end_specification()
-        data_writer.close()
 
-        return data_writer.filename
-
-    # inherited from data specable vertex
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "robot_motor_control.aplx"
 
@@ -169,31 +179,9 @@ class MunichMotorDevice(AbstractDataSpecableVertex,
         # Reserve memory:
         spec.reserve_memory_region(
             region=self.SYSTEM_REGION,
-            size=constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4,
+            size=constants.SYSTEM_BYTES_REQUIREMENT,
             label='setup')
 
         spec.reserve_memory_region(region=self.PARAMS_REGION,
                                    size=self.PARAMS_SIZE,
                                    label='params')
-
-    @property
-    def model_name(self):
-        return "Munich Motor Control"
-
-    def get_sdram_usage_for_atoms(self, vertex_slice, graph):
-        return self.SYSTEM_SIZE + self.PARAMS_SIZE
-
-    def get_dtcm_usage_for_atoms(self, vertex_slice, graph):
-        return 0
-
-    def get_cpu_usage_for_atoms(self, vertex_slice, graph):
-        return 0
-
-    def has_dependent_vertices(self):
-        return True
-
-    def is_data_specable(self):
-        return True
-
-    def partition_identifier_for_dependent_edge(self, dependent_edge):
-        return None

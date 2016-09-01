@@ -5,8 +5,7 @@ from pacman.model.graphs.abstract_spinnaker_link_vertex import \
 class ExternalCochleaDevice(AbstractSpiNNakerLinkVertex):
 
     def __init__(
-            self, n_neurons, spinnaker_link, machine_time_step,
-            timescale_factor, label=None, board_address=None):
+            self, n_neurons, spinnaker_link, label=None, board_address=None):
         AbstractSpiNNakerLinkVertex.__init__(
             self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link,
             label=label, max_atoms_per_core=n_neurons,

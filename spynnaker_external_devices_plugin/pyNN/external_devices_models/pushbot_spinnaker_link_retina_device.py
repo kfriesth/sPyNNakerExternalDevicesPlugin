@@ -1,16 +1,17 @@
-# fec imports
+# spinn front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utility_models.multi_cast_command \
+    import MultiCastCommand
 
 # pynn imports
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.utilities.multi_cast_command import MultiCastCommand
 
-# pacman improts
+# pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
@@ -61,8 +62,7 @@ class PushBotRetinaDevice(AbstractSpiNNakerLinkVertex,
     SENSOR_SET_PUSHBOT = 0x1
 
     def __init__(
-            self, fixed_key, spinnaker_link_id, machine_time_step,
-            timescale_factor, label=None, n_neurons=None,
+            self, fixed_key, spinnaker_link_id, label=None, n_neurons=None,
             polarity=PushBotRetinaPolarity.Merged,
             resolution=PushBotRetinaResolution.Downsample64,
             board_address=None):
