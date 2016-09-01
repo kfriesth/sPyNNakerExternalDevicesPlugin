@@ -1,40 +1,36 @@
 # spynnaker imports
-from pacman.model.constraints.partitioner_constraints.\
-    partitioner_maximum_size_constraint import \
-    PartitionerMaximumSizeConstraint
-from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.sdram_resource import SDRAMResource
+from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.models.abstract_models\
     .abstract_vertex_with_dependent_vertices import \
     AbstractVertexWithEdgeToDependentVertices
-from spynnaker.pyNN import exceptions
 
 # pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
-from pacman.model.graphs.application.impl.application_virtual_vertex \
-    import ApplicationVirtualVertex
-from pacman.model.graphs.application.impl.application_vertex import \
-    ApplicationVertex
+from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
+    import ApplicationSpiNNakerLinkVertex
+from pacman.model.graphs.application.impl.application_vertex \
+    import ApplicationVertex
+from pacman.model.decorators.overrides import overrides
+from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.resources.dtcm_resource import DTCMResource
+from pacman.model.resources.cpu_cycles_per_tick_resource \
+    import CPUCyclesPerTickResource
 
 # front end common imports
-
-from spinn_front_end_common.abstract_models.impl\
-    .application_data_specable_vertex import ApplicationDataSpecableVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
-    import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
     .abstract_provides_outgoing_partition_constraints\
     import AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.utilities import constants
+from spinn_front_end_common.abstract_models.impl\
+    .application_data_specable_vertex import ApplicationDataSpecableVertex
+from spinn_front_end_common.abstract_models\
+    .abstract_has_associated_binary import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # general imports
@@ -45,14 +41,14 @@ logger = logging.getLogger(__name__)
 MOTOR_PARTITION_ID = "MOTOR"
 
 
-class _MunichMotorDevice(ApplicationVirtualVertex):
+class _MunichMotorDevice(ApplicationSpiNNakerLinkVertex):
 
-    def __init__(self, spinnaker_link_id):
+    def __init__(self, spinnaker_link_id, board_address=None):
 
-        ApplicationVirtualVertex.__init__(
-            self, 6, spinnaker_link_id,
-            "External Munich Motor",
-            constraints=[PartitionerMaximumSizeConstraint(6)])
+        ApplicationSpiNNakerLinkVertex.__init__(
+            self, n_atoms=6, spinnaker_link_id=spinnaker_link_id,
+            label="External Munich Motor", max_atoms_per_core=6,
+            board_address=board_address)
 
 
 class MunichMotorDevice(
