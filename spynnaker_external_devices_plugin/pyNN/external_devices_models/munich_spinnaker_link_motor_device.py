@@ -8,8 +8,8 @@ from spynnaker.pyNN.models.abstract_models\
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
-from pacman.model.graphs.abstract_spinnaker_link_vertex import \
-    AbstractSpiNNakerLinkVertex
+from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
+    import ApplicationSpiNNakerLinkVertex
 from pacman.model.graphs.application.impl.application_vertex \
     import ApplicationVertex
 from pacman.model.decorators.overrides import overrides
@@ -41,21 +41,14 @@ logger = logging.getLogger(__name__)
 MOTOR_PARTITION_ID = "MOTOR"
 
 
-class _MunichMotorDevice(AbstractSpiNNakerLinkVertex):
+class _MunichMotorDevice(ApplicationSpiNNakerLinkVertex):
 
     def __init__(self, spinnaker_link_id, board_address=None):
 
-        AbstractSpiNNakerLinkVertex.__init__(
+        ApplicationSpiNNakerLinkVertex.__init__(
             self, n_atoms=6, spinnaker_link_id=spinnaker_link_id,
             label="External Munich Motor", max_atoms_per_core=6,
             board_address=board_address)
-
-    @property
-    def model_name(self):
-        return "external motor device"
-
-    def is_virtual_vertex(self):
-        return True
 
 
 class MunichMotorDevice(

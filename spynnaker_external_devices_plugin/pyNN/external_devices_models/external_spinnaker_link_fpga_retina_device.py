@@ -1,11 +1,11 @@
 import logging
 
-from pacman.model.graphs.abstract_spinnaker_link_vertex import \
-    AbstractSpiNNakerLinkVertex
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
 from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
+from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
+    import ApplicationSpiNNakerLinkVertex
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
@@ -59,7 +59,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 
 class ExternalFPGARetinaDevice(
-        AbstractSpiNNakerLinkVertex, AbstractSendMeMulticastCommandsVertex,
+        ApplicationSpiNNakerLinkVertex, AbstractSendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
@@ -128,7 +128,7 @@ class ExternalFPGARetinaDevice(
             logger.warn("The specified number of neurons for the FPGA retina"
                         " device has been ignored {} will be used instead"
                         .format(fixed_n_neurons))
-        AbstractSpiNNakerLinkVertex.__init__(
+        ApplicationSpiNNakerLinkVertex.__init__(
             self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
             label=label, max_atoms_per_core=fixed_n_neurons,
             board_address=board_address)
@@ -140,13 +140,3 @@ class ExternalFPGARetinaDevice(
     def get_outgoing_partition_constraints(self, partition, graph_mapper):
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
-
-    @property
-    def model_name(self):
-        return "external FPGA retina device"
-
-    def is_virtual_vertex(self):
-        return True
-
-    def recieves_multicast_commands(self):
-        return True

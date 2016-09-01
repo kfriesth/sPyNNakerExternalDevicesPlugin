@@ -1,8 +1,6 @@
 # pacman imports
-
-# external devices imports
-from pacman.model.graphs.abstract_fpga_vertex\
-    import AbstractFPGAVertex
+from pacman.model.graphs.application.impl.application_fpga_vertex \
+    import ApplicationFPGAVertex
 
 # general imports
 from abc import ABCMeta
@@ -10,14 +8,10 @@ from six import add_metaclass
 
 
 @add_metaclass(ABCMeta)
-class ArbitaryFPGADevice(AbstractFPGAVertex):
+class ArbitaryFPGADevice(ApplicationFPGAVertex):
 
     def __init__(
             self, n_neurons, fpga_link_id, fpga_id, board_address=None,
             label=None):
-        AbstractFPGAVertex.__init__(
+        ApplicationFPGAVertex.__init__(
             self, n_neurons, fpga_link_id, fpga_id, board_address, label)
-
-    @property
-    def model_name(self):
-        return "ArbitaryFPGADevice:{}".format(self.label)
