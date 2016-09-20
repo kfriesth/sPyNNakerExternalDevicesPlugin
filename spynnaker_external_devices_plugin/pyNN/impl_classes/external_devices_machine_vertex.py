@@ -12,6 +12,7 @@ class ExternalDevicesMachineVertex(MachineVertex):
         self._resources = resources
         MachineVertex.__init__(self, label, constraints)
 
+    @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         return self._resources
