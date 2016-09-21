@@ -23,7 +23,7 @@ from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_motor_device import MunichMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    arbitary_fpga_device import ArbitaryFPGADevice
+    arbitrary_fpga_device import ArbitraryFPGADevice
 
 from spynnaker_external_devices_plugin.pyNN import model_binaries
 

@@ -9,7 +9,7 @@ import spynnaker_external_devices_plugin.pyNN as external_devices
 p.setup(timestep=1.0)
 
 retina_pop = p.Population(
-    2000, external_devices.ArbitaryFPGADevice, {
+    2000, external_devices.ArbitraryFPGADevice, {
         'fpga_link_id': 12,
         'fpga_id': 1,
         'board_address': "127.0.0.1", # 4, 8
@@ -17,7 +17,7 @@ retina_pop = p.Population(
     label='External sata thing')
 
 retina_pop = p.Population(
-    2000, external_devices.ArbitaryFPGADevice, {
+    2000, external_devices.ArbitraryFPGADevice, {
         'fpga_link_id': 11,
         'fpga_id': 1,
         'board_address': "127.0.0.2", # 0 0

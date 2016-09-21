@@ -133,8 +133,8 @@ class ExternalFPGARetinaDevice(
             label=label, max_atoms_per_core=fixed_n_neurons,
             board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
-            MultiCastCommand(0, 0x0000FFFF, 0xFFFF0000, 1, 5, 100),
-            MultiCastCommand(-1, 0x0000FFFE, 0xFFFF0000, 0, 5, 100)])
+            MultiCastCommand(0, 0x0000FFFF, 1, 5, 100),
+            MultiCastCommand(-1, 0x0000FFFE, 0, 5, 100)])
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
     def get_outgoing_partition_constraints(self, partition):

@@ -8,7 +8,7 @@ from six import add_metaclass
 
 
 @add_metaclass(ABCMeta)
-class ArbitaryFPGADevice(ApplicationFPGAVertex):
+class ArbitraryFPGADevice(ApplicationFPGAVertex):
 
     def __init__(
             self, n_neurons, fpga_link_id, fpga_id, board_address=None,

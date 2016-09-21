@@ -130,50 +130,35 @@ class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
         commands = list()
         commands.append(MultiCastCommand(
             0, PushBotRetinaDevice.SENSOR | PushBotRetinaDevice.SENSOR_SET_KEY,
-            PushBotRetinaDevice.MANAGEMENT_MASK, self._retina_source_key,
-            1, 100))
+            self._retina_source_key, 1, 100))
 
         # Set sensor to pushbot
         commands.append(MultiCastCommand(
             0, (PushBotRetinaDevice.SENSOR |
-                PushBotRetinaDevice.SENSOR_SET_PUSHBOT),
-            PushBotRetinaDevice.MANAGEMENT_MASK, 1,
-            1, 100))
+                PushBotRetinaDevice.SENSOR_SET_PUSHBOT), 1, 1, 100))
 
         # Ensure retina is disabled
         commands.append(MultiCastCommand(
-            0, PushBotRetinaDevice.RETINA_DISABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK, 0,
-            1, 100))
+            0, PushBotRetinaDevice.RETINA_DISABLE, 0, 1, 100))
 
         # Set retina key
         commands.append(MultiCastCommand(
             0, PushBotRetinaDevice.RETINA_KEY_SET,
-            PushBotRetinaDevice.MANAGEMENT_MASK, self._retina_source_key,
-            1, 100))
+            self._retina_source_key, 1, 100))
 
         # Enable retina
         commands.append(MultiCastCommand(
             0, PushBotRetinaDevice.RETINA_ENABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK,
             (PushBotRetinaDevice.RETINA_NO_TIMESTAMP +
              self._resolution.value.enable_command),
             1, 100))
 
         # At end of simulation, disable retina
         commands.append(MultiCastCommand(
-            -1, PushBotRetinaDevice.RETINA_DISABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK, 0,
-            1, 100))
+            -1, PushBotRetinaDevice.RETINA_DISABLE, 0, 1, 100))
 
         return commands
 
     @property
     def model_name(self):
         return "pushbot retina device"
-
-    def recieves_multicast_commands(self):
-        return True
-
-    def is_virtual_vertex(self):
-        return True
