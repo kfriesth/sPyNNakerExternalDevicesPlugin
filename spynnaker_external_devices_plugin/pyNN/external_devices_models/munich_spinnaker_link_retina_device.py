@@ -2,10 +2,10 @@
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
-from spinn_front_end_common.utility_models.multi_cast_command \
-    import MultiCastCommand
 
 # pynn imports
+from spinn_front_end_common.utility_models.commands.multi_cast_command_with_payload import \
+    MultiCastCommandWithPayload
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
@@ -77,16 +77,18 @@ class MunichRetinaDevice(
             fixed_n_neurons = 128 * 128
             self._fixed_mask = 0xFFFFC000
 
+        self._polarity = polarity
+        self._position = position
+
         ApplicationSpiNNakerLinkVertex.__init__(
             self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
             max_atoms_per_core=fixed_n_neurons, label=label,
             board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(
-            self, self._get_commands(position))
+            self, start_resume_commands=self._start_pause_commands(),
+            pause_stop_commands=self._pause_stop_commands(),
+            timed_commands=self._get_timed_commands())
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
-
-        self._polarity = polarity
-        self._position = position
 
         if (self._position != self.RIGHT_RETINA and
            self._position != self.LEFT_RETINA):
@@ -101,14 +103,11 @@ class MunichRetinaDevice(
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._fixed_key, self._fixed_mask)])]
 
-    def _get_commands(self, position):
-        """ Return the commands for the retina external device
-        """
+    def _start_pause_commands(self):
         commands = list()
-
         # change the retina key it transmits with
         # (based off if its right or left)
-        if position == self.RIGHT_RETINA:
+        if self._position == self.RIGHT_RETINA:
             key_set_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_KEY_SET
         else:
             key_set_command = self.MANAGEMENT_BIT | self.LEFT_RETINA_KEY_SET
@@ -118,22 +117,28 @@ class MunichRetinaDevice(
         key_set_payload = (self._virtual_chip_x << 24 |
                            self._virtual_chip_y << 16)
 
-        commands.append(MultiCastCommand(
+        commands.append(MultiCastCommandWithPayload(
             0, key_set_command, key_set_payload, 5, 1000))
 
         # make retina enabled (dependent on if its a left or right retina
-        if position == self.RIGHT_RETINA:
+        if self._position == self.RIGHT_RETINA:
             enable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_ENABLE
         else:
             enable_command = self.MANAGEMENT_BIT | self.LEFT_RETINA_ENABLE
-        commands.append(MultiCastCommand(0, enable_command, 1, 5, 1000))
+        commands.append(
+            MultiCastCommandWithPayload(0, enable_command, 1, 5, 1000))
 
-        # disable retina
-        if position == self.RIGHT_RETINA:
+    def _pause_stop_commands(self):
+        commands = list()
+         # disable retina
+        if self._position == self.RIGHT_RETINA:
             disable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_DISABLE
         else:
             disable_command = self.MANAGEMENT_BIT | self.LEFT_RETINA_DISABLE
 
-        commands.append(MultiCastCommand(-1, disable_command, 0, 5, 1000))
+        commands.append(
+            MultiCastCommandWithPayload(-1, disable_command, 0, 5, 1000))
 
-        return commands
+    @staticmethod
+    def _get_timed_commands():
+        return []

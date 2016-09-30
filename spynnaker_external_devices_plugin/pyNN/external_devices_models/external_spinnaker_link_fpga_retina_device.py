@@ -9,8 +9,9 @@ from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
-from spinn_front_end_common.utility_models.multi_cast_command \
-    import MultiCastCommand
+from spinn_front_end_common.utility_models.commands.\
+    multi_cast_command_with_payload import \
+    MultiCastCommandWithPayload
 from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
@@ -132,9 +133,12 @@ class ExternalFPGARetinaDevice(
             self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
             label=label, max_atoms_per_core=fixed_n_neurons,
             board_address=board_address)
-        AbstractSendMeMulticastCommandsVertex.__init__(self, commands=[
-            MultiCastCommand(0, 0x0000FFFF, 1, 5, 100),
-            MultiCastCommand(-1, 0x0000FFFE, 0, 5, 100)])
+        AbstractSendMeMulticastCommandsVertex.__init__(
+            self, start_resume_commands=[
+                MultiCastCommandWithPayload(0, 0x0000FFFF, 1, 5, 100)],
+            pause_stop_commands=[
+                MultiCastCommandWithPayload(-1, 0x0000FFFE, 0, 5, 100)],
+            timed_commands=[])
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
     def get_outgoing_partition_constraints(self, partition):

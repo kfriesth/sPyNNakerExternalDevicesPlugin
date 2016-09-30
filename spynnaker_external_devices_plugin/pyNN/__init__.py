@@ -198,3 +198,46 @@ def SpikeInjector(
     spynnaker_external_devices.add_socket_address(database_socket)
     return SpynnakerExternalDeviceSpikeInjector(
         n_neurons=n_neurons, label=label, port=port, virtual_key=virtual_key)
+
+
+def create_push_bot_ethernet(injector_pop, spinnaker_packet_port, sending_pops,
+                             sending_pops_callbacks):
+    """ helper method that builds the bridge between the push bot communicating
+    via wifi and the spinnaker machine its going to feed data into and receive
+    data from
+
+    :param injector_pop:
+    :param spinnaker_packet_port:
+    :param sending_pops:
+    :return:
+    """
+
+    receive_labels = list()
+    for receive_pop in sending_pops:
+        receive_labels.append(receive_pop.label)
+        activate_live_output_for(receive_pop, port=spinnaker_packet_port)
+
+    live_spikes_connection = SpynnakerLiveSpikesConnection(
+        receive_labels=receive_labels,
+        send_labels=[injector_pop.label])
+
+    # Set up callbacks to occur at the start of simulation
+    live_spikes_connection.add_start_callback(
+        injector_pop.label, _push_bot_spikes_to_forward_to_spinnaker)
+
+    # Set up callbacks to occur when spikes are received
+    for receive_pop_label, callback in zip(receive_labels, sending_pops_callbacks):
+        live_spikes_connection.add_receive_callback(
+            receive_pop_label, callback)
+
+    connection = xxxxx
+
+
+
+
+def _push_bot_spikes_to_forward_to_bot(label, time, neuron_ids):
+    pass
+
+
+
+

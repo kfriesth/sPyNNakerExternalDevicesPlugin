@@ -1,166 +1,118 @@
-# spinn front end common imports
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_partition_constraints import \
-    AbstractProvidesOutgoingPartitionConstraints
-from spinn_front_end_common.utility_models.multi_cast_command \
-    import MultiCastCommand
-
 # pynn imports
+from enum import Enum
+
+from pacman.executor.injection_decorator import inject, supports_injection
+from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
+    import ApplicationSpiNNakerLinkVertex
+from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.models.abstract_models\
     .abstract_send_me_multicast_commands_vertex \
     import AbstractSendMeMulticastCommandsVertex
-from spynnaker.pyNN import exceptions
-
-# pacman imports
-from pacman.model.constraints.key_allocator_constraints\
-    .key_allocator_fixed_key_and_mask_constraint \
-    import KeyAllocatorFixedKeyAndMaskConstraint
-from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
-from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
-    import ApplicationSpiNNakerLinkVertex
-
-
-# general imports
-from collections import namedtuple
-from enum import Enum, IntEnum
-
-# Named tuple bundling together configuration elements of a pushbot resolution
-# config
-PushBotRetinaResolutionConfig = namedtuple("PushBotRetinaResolution",
-                                           ["pixels", "enable_command",
-                                            "coordinate_bits"])
+from spynnaker.pyNN.utilities import constants
+from spynnaker_external_devices_plugin.pyNN.protocols.\
+    munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
 
 PushBotRetinaResolution = Enum(
     value="PushBotRetinaResolution",
-    names=[("Native128", PushBotRetinaResolutionConfig(128, (1 << 26), 7)),
-           ("Downsample64", PushBotRetinaResolutionConfig(64, (2 << 26), 6)),
-           ("Downsample32", PushBotRetinaResolutionConfig(32, (3 << 26), 5)),
-           ("Downsample16", PushBotRetinaResolutionConfig(16, (4 << 26), 4))])
+    names=[("Native128", 128*128),
+           ("Downsample64", 64*64),
+           ("Downsample32", 32*32),
+           ("Downsample16", 16*16)])
 
-PushBotRetinaPolarity = IntEnum(
+PushBotRetinaPolarity = Enum(
     value="PushBotRetinaPolarity",
     names=["Up", "Down", "Merged"])
 
+UART_ID = 0
 
+@supports_injection
 class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
-                          AbstractSendMeMulticastCommandsVertex,
-                          AbstractProvidesOutgoingPartitionConstraints):
-
-    # Mask for all SpiNNaker->Pushbot commands
-    MANAGEMENT_MASK = 0xFFFFF800
-
-    # Retina-specific commands
-    RETINA_ENABLE = 0x1
-    RETINA_DISABLE = 0x0
-    RETINA_KEY_SET = 0x2
-    RETINA_NO_TIMESTAMP = (0 << 29)
-
-    # Sensor commands
-    SENSOR = 0x7F0
-    SENSOR_SET_KEY = 0x0
-    SENSOR_SET_PUSHBOT = 0x1
+                          AbstractSendMeMulticastCommandsVertex):
 
     def __init__(
-            self, fixed_key, spinnaker_link_id, label=None, n_neurons=None,
+            self, spinnaker_link_id, label=None,
             polarity=PushBotRetinaPolarity.Merged,
-            resolution=PushBotRetinaResolution.Downsample64,
-            board_address=None, command_sender_top_bits_key=0x00000000):
+            n_neurons=PushBotRetinaResolution.Native128,
+            board_address=None):
 
         # Validate number of timestamp bytes
         if not isinstance(polarity, PushBotRetinaPolarity):
             raise exceptions.SpynnakerException(
                 "Pushbot retina polarity should be one of those defined in"
                 " Polarity enumeration")
-        if not isinstance(resolution, PushBotRetinaResolution):
-            raise exceptions.SpynnakerException(
-                "Pushbot retina resolution should be one of those defined in"
-                " Resolution enumeration")
 
-        # Cache resolution
-        self._resolution = resolution
-
-        # Build standard routing key from virtual chip coordinates
-        self._routing_key = fixed_key
-        self._retina_source_key = self._routing_key
-
-        # Calculate number of neurons
-        fixed_n_neurons = resolution.value.pixels ** 2
-
-        # If polarity is merged
+        # if not using all spikes,
         if polarity == PushBotRetinaPolarity.Merged:
-            # Double number of neurons
-            fixed_n_neurons *= 2
+            n_neurons *= 2
 
-            # We need to mask out two coordinates and a polarity bit
-            mask_bits = (2 * resolution.value.coordinate_bits) + 1
-        # Otherwise
-        else:
-            # We need to mask out two coordinates
-            mask_bits = 2 * resolution.value.coordinate_bits
+        # munich protocol
+        self._protocol = MunichIoSpiNNakerLinkProtocol(
+            mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
 
-            # If polarity is up, set polarity bit in routing key
-            if polarity == PushBotRetinaPolarity.Up:
-                polarity_bit = 1 << (2 * resolution.value.coordinate_bits)
-                self._routing_key |= polarity_bit
-
-        # Build routing mask
-        self._routing_mask = ~((1 << mask_bits) - 1) & 0xFFFFFFFF
+        # holder for commands that need mods from pacman
+        self._commands_that_need_payload_updating_with_key = list()
 
         ApplicationSpiNNakerLinkVertex.__init__(
-            self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
-            max_atoms_per_core=fixed_n_neurons, label=label,
+            self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
+            max_atoms_per_core=n_neurons, label=label,
             board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(
-            self, self._get_commands(command_sender_top_bits_key))
-        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+            self, start_resume_commands=self._get_start_resume_commands(),
+            pause_stop_commands=self._get_pause_stop_commands(),
+            timed_commands=self._get_timed_commands())
 
-        if n_neurons != fixed_n_neurons and n_neurons is not None:
-            print "Warning, the retina will have {} neurons".format(
-                fixed_n_neurons)
+        # stores for the injection aspects
+        self._graph_mapper = None
+        self._routing_infos = None
 
-    def get_outgoing_partition_constraints(self, partition):
-        return [KeyAllocatorFixedKeyAndMaskConstraint(
-            [BaseKeyAndMask(self._routing_key, self._routing_mask)])]
+    def _get_start_resume_commands(self):
+        # add to tracker for keys that need updating
+        new_key_command = self._protocol.set_retina_transmission_key(
+                new_key=None, uart_id=UART_ID)
 
-    def _get_commands(self, command_top_bits_key):
-        """
-        method that returns the commands for the retina external device
-        """
-        # Set sensor key
+        self._commands_that_need_payload_updating_with_key.append(
+            new_key_command)
+
         commands = list()
-        commands.append(MultiCastCommand(
-            0, (command_top_bits_key | PushBotRetinaDevice.SENSOR |
-                PushBotRetinaDevice.SENSOR_SET_KEY),
-            self._retina_source_key, 1, 100))
-
-        # Set sensor to pushbot
-        commands.append(MultiCastCommand(
-            0, (command_top_bits_key | PushBotRetinaDevice.SENSOR |
-                PushBotRetinaDevice.SENSOR_SET_PUSHBOT), 1, 1, 100))
-
-        # Ensure retina is disabled
-        commands.append(MultiCastCommand(
-            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_DISABLE),
-            0, 1, 100))
-
-        # Set retina key
-        commands.append(MultiCastCommand(
-            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_KEY_SET),
-            self._retina_source_key, 1, 100))
-
-        # Enable retina
-        commands.append(MultiCastCommand(
-            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_ENABLE),
-            (PushBotRetinaDevice.RETINA_NO_TIMESTAMP +
-             self._resolution.value.enable_command),
-            1, 100))
-
-        # At end of simulation, disable retina
-        commands.append(MultiCastCommand(
-            -1, (command_top_bits_key | PushBotRetinaDevice.RETINA_DISABLE),
-            0, 1, 100))
+        commands.append(self._protocol.get_set_mode_command())
+        commands.append(self._protocol.disable_retina_event_streaming(
+            uart_id=UART_ID))
+        commands.append(new_key_command)
+        commands.append(self._protocol.set_retina_transmission(
+            events_in_key=True, retina_pixels=self._n_atoms/2,
+            payload_holds_time_stamps=False,
+            size_of_time_stamp_in_bytes=None, uart_id=UART_ID, time=0))
 
         return commands
+
+    def _get_pause_stop_commands(self):
+        commands = list()
+        commands.append(self._protocol.disable_retina_event_streaming(
+            uart_id=UART_ID))
+        return commands
+
+    @staticmethod
+    def _get_timed_commands():
+        return []
+
+    @inject("MemoryGraphMapper")
+    def graph_mapper(self, graph_mapper):
+        self._graph_mapper = graph_mapper
+        if self._routing_infos is not None:
+            self.update_commands_with_payload_with_key()
+
+    @inject("MemoryRoutingInfos")
+    def routing_info(self, routing_info):
+        self._routing_infos = routing_info
+        if self._graph_mapper is not None:
+            self.update_commands_with_payload_with_key()
+
+    def update_commands_with_payload_with_key(self):
+        for command in self._commands_that_need_payload_updating_with_key:
+            vert = list(self._graph_mapper.get_machine_vertices(self))[0]
+            key = self._routing_infos.get_first_key_from_pre_vertex(
+                vert, constants.SPIKE_PARTITION_ID)
+            command.payload = key
 
     @property
     def model_name(self):
