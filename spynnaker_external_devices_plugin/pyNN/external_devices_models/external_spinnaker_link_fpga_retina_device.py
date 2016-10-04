@@ -3,19 +3,18 @@ import logging
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_key_and_mask_constraint \
     import KeyAllocatorFixedKeyAndMaskConstraint
-from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
     import ApplicationSpiNNakerLinkVertex
+from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.abstract_models.impl.\
+    send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
 from spinn_front_end_common.utility_models.commands.\
     multi_cast_command_with_payload import \
     MultiCastCommandWithPayload
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.models.abstract_models\
-    .abstract_send_me_multicast_commands_vertex \
-    import AbstractSendMeMulticastCommandsVertex
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +59,7 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 
 class ExternalFPGARetinaDevice(
-        ApplicationSpiNNakerLinkVertex, AbstractSendMeMulticastCommandsVertex,
+        ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
     MODE_128 = "128"
@@ -133,7 +132,7 @@ class ExternalFPGARetinaDevice(
             self, n_atoms=fixed_n_neurons, spinnaker_link_id=spinnaker_link_id,
             label=label, max_atoms_per_core=fixed_n_neurons,
             board_address=board_address)
-        AbstractSendMeMulticastCommandsVertex.__init__(
+        SendMeMulticastCommandsVertex.__init__(
             self, start_resume_commands=[
                 MultiCastCommandWithPayload(0, 0x0000FFFF, 1, 5, 100)],
             pause_stop_commands=[

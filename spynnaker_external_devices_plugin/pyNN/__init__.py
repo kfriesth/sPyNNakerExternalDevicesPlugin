@@ -6,42 +6,36 @@ and implementation for the PyNN High-level API
 
 import os
 
+from spinn_front_end_common.utilities.notification_protocol.socket_address \
+    import SocketAddress
 from spinnman.messages.eieio.eieio_type import EIEIOType
+from spynnaker.pyNN.spinnaker import executable_finder
+from spynnaker.pyNN.utilities import conf
 from spynnaker.pyNN.utilities import constants
+from spynnaker_external_devices_plugin.pyNN import model_binaries
+from spynnaker_external_devices_plugin.pyNN.connections\
+    .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    arbitrary_fpga_device import ArbitraryFPGADevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     external_spinnaker_link_cochlea_device import ExternalCochleaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     external_spinnaker_link_fpga_retina_device import ExternalFPGARetinaDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    munich_spinnaker_link_retina_device import MunichRetinaDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_spinnaker_link_retina_device import PushBotRetinaDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_spinnaker_link_retina_device import PushBotRetinaResolution
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    pushbot_spinnaker_link_retina_device import PushBotRetinaPolarity
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_motor_device import MunichMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    arbitrary_fpga_device import ArbitraryFPGADevice
-
-from spynnaker_external_devices_plugin.pyNN import model_binaries
+    munich_spinnaker_link_retina_device import MunichRetinaDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_motor_device import PushBotSpiNNakerLinkMotorDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_retina_device import \
+    PushBotSpiNNakerLinkRetinaDevice
 
 from spynnaker_external_devices_plugin.pyNN.\
     spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager
 from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
     import SpikeInjector as SpynnakerExternalDeviceSpikeInjector
-from spynnaker_external_devices_plugin.pyNN.connections\
-    .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-
-
-from spynnaker.pyNN.utilities import conf
-from spynnaker.pyNN.spinnaker import executable_finder
-
-
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
 
 executable_finder.add_path(os.path.dirname(model_binaries.__file__))
 spynnaker_external_devices = SpynnakerExternalDevicePluginManager()

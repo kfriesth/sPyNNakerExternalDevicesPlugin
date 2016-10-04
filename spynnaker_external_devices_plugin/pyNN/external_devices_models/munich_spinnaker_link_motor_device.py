@@ -1,40 +1,35 @@
 # spynnaker imports
-from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.models.abstract_models\
-    .abstract_vertex_with_dependent_vertices import \
-    AbstractVertexWithEdgeToDependentVertices
+import logging
 
-# pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
+from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
     import ApplicationSpiNNakerLinkVertex
 from pacman.model.graphs.application.impl.application_vertex \
     import ApplicationVertex
-from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.sdram_resource import SDRAMResource
-from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.cpu_cycles_per_tick_resource \
     import CPUCyclesPerTickResource
-
-# front end common imports
+from pacman.model.resources.dtcm_resource import DTCMResource
+from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.resources.sdram_resource import SDRAMResource
 from spinn_front_end_common.abstract_models\
-    .abstract_provides_outgoing_partition_constraints\
-    import AbstractProvidesOutgoingPartitionConstraints
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.abstract_models.impl\
-    .application_data_specable_vertex import ApplicationDataSpecableVertex
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models\
     .abstract_has_associated_binary import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
+    .abstract_provides_outgoing_partition_constraints\
+    import AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.abstract_models.impl\
+    .application_data_specable_vertex import ApplicationDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.\
+    vertex_with_dependent_vertices import \
+    VertexWithEdgeToDependentVertices
 from spinn_front_end_common.interface.simulation import simulation_utilities
-
-# general imports
-import logging
+from spinn_front_end_common.utilities import constants
+from spynnaker.pyNN import exceptions
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +48,7 @@ class _MunichMotorDevice(ApplicationSpiNNakerLinkVertex):
 
 class MunichMotorDevice(
         ApplicationDataSpecableVertex, AbstractHasAssociatedBinary,
-        ApplicationVertex, AbstractVertexWithEdgeToDependentVertices,
+        ApplicationVertex, VertexWithEdgeToDependentVertices,
         AbstractProvidesOutgoingPartitionConstraints,
         AbstractBinaryUsesSimulationRun):
     """ An Omnibot motor control device - has a real vertex and an external\
@@ -77,8 +72,8 @@ class MunichMotorDevice(
                         " device has been ignored; 6 will be used instead")
 
         ApplicationVertex.__init__(self, label)
-        AbstractVertexWithEdgeToDependentVertices.__init__(
-            self, [_MunichMotorDevice(spinnaker_link_id)], MOTOR_PARTITION_ID)
+        VertexWithEdgeToDependentVertices.__init__(
+            self, {_MunichMotorDevice(spinnaker_link_id): MOTOR_PARTITION_ID})
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         self._speed = speed

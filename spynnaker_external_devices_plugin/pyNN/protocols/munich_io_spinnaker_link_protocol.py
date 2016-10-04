@@ -116,6 +116,21 @@ REMOVE_PAYLOAD_TO_CURRENT_OUTPUT_KEY = (5 << OFFSET_TO_I) | (3 << OFFSET_TO_D)
 # set payload pins to high impedance
 SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY = (5 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
 
+# set laser params for push bot
+PUSH_BOT_LASER_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
+PUSH_BOT_LASER_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
+
+
+
+# set speaker params for push bot
+PUSH_BOT_SPEAKER_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (2 << OFFSET_TO_D)
+PUSH_BOT_SPEAKER_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (2 << OFFSET_TO_D)
+
+# set led params for push bot
+PUSH_BOT_LED_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
+PUSH_BOT_LED_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
+
+
 # payloads for the different modes
 PAYLOAD_RESET_TO_DEFAULT_MODE = 0
 PAYLOAD_SET_TO_PUSH_BOT_MODE = 1
@@ -257,86 +272,101 @@ class MunichIoSpiNNakerLinkProtocol(object):
                     (time_in_ms << OFFSET_FOR_SENSOR_TIME)),
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor_enable_disable(self, enable_disable, time):
+    def generic_motor_enable_disable(self, enable_disable, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=DISABLE_MOTOR_KEY,
+            key=DISABLE_MOTOR_KEY | (uart_id << OFFSET_FOR_UART_ID),
             payload=enable_disable,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor_total_period_duration(self, time_in_ms, time):
+    def generic_motor_total_period_duration(self, time_in_ms, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_RUN_FOR_PERIOD_KEY,
+            key=MOTOR_RUN_FOR_PERIOD_KEY | (uart_id << OFFSET_FOR_UART_ID),
             payload=time_in_ms,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor0_raw_output_permanent(self, duration, time):
+    def generic_motor0_raw_output_permanent(self, pwm_signal, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_0_RAW_PERM_KEY, payload=duration,
+            key=MOTOR_0_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
+
+    def generic_motor1_raw_output_permanent(self, pwm_signal, time, uart_id=0):
+        return MultiCastCommandWithPayload(
+            key=MOTOR_1_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
+
+    def generic_motor0_raw_output_leak_to_0(self, pwm_signal, time, uart_id=0):
+        return MultiCastCommandWithPayload(
+            key=MOTOR_0_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
+
+    def generic_motor1_raw_output_leak_to_0(self, pwm_signal, time, uart_id=0):
+        return MultiCastCommandWithPayload(
+            key=MOTOR_1_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
+
+    def pwm_pin_output_timer_a_duration(self, timer_period, time, uart_id):
+        return MultiCastCommandWithPayload(
+            key=(MOTOR_TIMER_A_TOTAL_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor1_raw_output_permanent(self, duration, time):
+    def pwm_pin_output_timer_b_duration(self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_1_RAW_PERM_KEY, payload=duration,
+            key=(MOTOR_TIMER_B_TOTAL_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor0_raw_output_leak_to_0(self, duration, time):
+    def pwm_pin_output_timer_c_duration(self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_0_RAW_LEAK_KEY, payload=duration,
+            key=(MOTOR_TIMER_C_TOTAL_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def generic_motor1_raw_output_leak_to_0(self, duration, time):
+    def pwm_pin_output_timer_a_channel_0_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_1_RAW_LEAK_KEY, payload=duration,
-            time=time, repeat=0, delay_between_repeats=0)
-
-    def pwm_pin_output_timer_a_duration(self, timer_period, time):
-        return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_A_TOTAL_PERIOD_KEY, payload=timer_period,
-            time=time, repeat=0, delay_between_repeats=0)
-
-    def pwm_pin_output_timer_b_duration(self, timer_period, time):
-        return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_B_TOTAL_PERIOD_KEY, payload=timer_period,
-            time=time, repeat=0, delay_between_repeats=0)
-
-    def pwm_pin_output_timer_c_duration(self, timer_period, time):
-        return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_C_TOTAL_PERIOD_KEY, payload=timer_period,
-            time=time, repeat=0, delay_between_repeats=0)
-
-    def pwm_pin_output_timer_a_channel_0_ratio(self, timer_period, time):
-        return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_A_CHANNEL_0_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_A_CHANNEL_0_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
-    def pwm_pin_output_timer_a_channel_1_ratio(self, timer_period, time):
+    def pwm_pin_output_timer_a_channel_1_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_A_CHANNEL_1_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_A_CHANNEL_1_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
-    def pwm_pin_output_timer_b_channel_0_ratio(self, timer_period, time):
+    def pwm_pin_output_timer_b_channel_0_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_B_CHANNEL_0_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_B_CHANNEL_0_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
-    def pwm_pin_output_timer_b_channel_1_ratio(self, timer_period, time):
+    def pwm_pin_output_timer_b_channel_1_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_B_CHANNEL_1_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_B_CHANNEL_1_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
-    def pwm_pin_output_timer_c_channel_0_ratio(self, timer_period, time):
+    def pwm_pin_output_timer_c_channel_0_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_C_CHANNEL_0_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_C_CHANNEL_0_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
-    def pwm_pin_output_timer_c_channel_1_ratio(self, timer_period, time):
+    def pwm_pin_output_timer_c_channel_1_ratio(
+            self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_TIMER_C_CHANNEL_1_ACTIVE_PERIOD_KEY,
+            key=(MOTOR_TIMER_C_CHANNEL_1_ACTIVE_PERIOD_KEY  |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
@@ -364,6 +394,11 @@ class MunichIoSpiNNakerLinkProtocol(object):
         return MultiCastCommandWithPayload(
             key=SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY, payload=payload,
             time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_laser_config(self, total_period, uart_id=0, time=0):
+        return MultiCastCommandWithPayload(
+            key=PUSH_BOT_LAZER_CONFIG | (uart_id << OFFSET_FOR_UART_ID),
+            payload=total_period, time=time, repeat=0, delay_between_repeats=0)
 
     def set_retina_transmission(
             self, events_in_key=True, retina_pixels=128*128,
