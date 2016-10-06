@@ -5,7 +5,7 @@ from spinn_front_end_common.utility_models.commands.\
     MultiCastCommandWithPayload
 from spinn_front_end_common.utility_models.commands.\
     multi_cast_command_without_payload import MultiCastCommandWithoutPayload
-from spynnaker.pyNN import exceptions
+from spinn_front_end_common.utilities import exceptions
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,9 @@ OFFSET_TO_D = 0
 OFFSET_FOR_TIMESTAMPS = 29
 OFFSET_FOR_RETINA_SIZE = 26
 SENSOR_ID_OFFSET = 27
+
 OFFSET_FOR_UART_ID = 2 + SENSOR_ID_OFFSET
+PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER = 1
 
 OFFSET_FOR_SENSOR_TIME = 31
 
@@ -119,17 +121,25 @@ SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY = (5 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
 # set laser params for push bot
 PUSH_BOT_LASER_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
 PUSH_BOT_LASER_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
+PUSH_BOT_LASER_FREQUENCY = (37 << OFFSET_TO_I) | (1 << OFFSET_TO_D)
 
-
+# set led params for push bot
+PUSH_BOT_LED_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
+PUSH_BOT_LED_BACK_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
+PUSH_BOT_LED_FRONT_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (5 << OFFSET_TO_D)
+PUSH_BOT_LED_FREQUENCY = (37 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
 
 # set speaker params for push bot
 PUSH_BOT_SPEAKER_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (2 << OFFSET_TO_D)
 PUSH_BOT_SPEAKER_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (2 << OFFSET_TO_D)
+PUSH_BOT_SPEAKER_TONE_BEEP = (36 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
+PUSH_BOT_SPEAKER_TONE_MELODY = (36 << OFFSET_TO_I) | (1 << OFFSET_TO_D)
 
-# set led params for push bot
-PUSH_BOT_LED_CONFIG_TOTAL_PERIOD = (4 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
-PUSH_BOT_LED_CONFIG_ACTIVE_TIME = (5 << OFFSET_TO_I) | (4 << OFFSET_TO_D)
-
+# push bot motor control
+PUSH_BOT_MOTOR_0_PERMANENT_VELOCITY = (32 << OFFSET_TO_I) | (0 << OFFSET_TO_D)
+PUSH_BOT_MOTOR_1_PERMANENT_VELOCITY = (32 << OFFSET_TO_I) | (1 << OFFSET_TO_D)
+PUSH_BOT_MOTOR_0_LEAKY_VELOCITY = (32 << OFFSET_TO_I) | (2 << OFFSET_TO_D)
+PUSH_BOT_MOTOR_1_LEAKY_VELOCITY = (32 << OFFSET_TO_I) | (3 << OFFSET_TO_D)
 
 # payloads for the different modes
 PAYLOAD_RESET_TO_DEFAULT_MODE = 0
@@ -203,7 +213,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 key=CHANGE_MODE,
                 payload=PAYLOAD_SET_TO_FREE_MODE,
                 time=time, repeat=0, delay_between_repeats=0)
-        raise exceptions.SynapticConfigurationException(
+        raise exceptions.ConfigurationException(
             "The mode given is not recognised within this protocol.")
 
     def set_retina_transmission_key(self, new_key=None, uart_id=0, time=0):
@@ -395,10 +405,160 @@ class MunichIoSpiNNakerLinkProtocol(object):
             key=SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY, payload=payload,
             time=time, repeat=0, delay_between_repeats=0)
 
-    def push_bot_laser_config(self, total_period, uart_id=0, time=0):
+    def push_bot_laser_config_total_period(
+            self, total_period, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=PUSH_BOT_LAZER_CONFIG | (uart_id << OFFSET_FOR_UART_ID),
+            key=(PUSH_BOT_LASER_CONFIG_TOTAL_PERIOD |
+                 (uart_id << OFFSET_FOR_UART_ID)),
             payload=total_period, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_laser_config_active_time(self, active_time, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LASER_CONFIG_ACTIVE_TIME |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=active_time, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_laser_set_frequency(self, frequency, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LASER_FREQUENCY |
+                 (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
+            payload=frequency, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_speaker_config_total_period(
+            self, total_period, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_SPEAKER_CONFIG_TOTAL_PERIOD |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=total_period, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_speaker_config_active_time(
+            self, active_time, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_SPEAKER_CONFIG_ACTIVE_TIME |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=active_time, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_speaker_set_tone(self, frequency, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_SPEAKER_TONE_BEEP |
+                 (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
+            payload=frequency, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_speaker_set_melody(self, melody, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_SPEAKER_TONE_MELODY |
+                 (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
+            payload=melody, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_led_total_period(self, total_period, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LED_CONFIG_TOTAL_PERIOD |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=total_period, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_led_back_active_time(self, active_time, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LED_BACK_CONFIG_ACTIVE_TIME |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=active_time, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_led_front_active_time(self, active_time, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LED_FRONT_CONFIG_ACTIVE_TIME |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=active_time, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_led_set_frequency(self, frequency, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_LED_FREQUENCY |
+                 (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
+            payload=frequency, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_motor_0_permanent(self, velocity, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_MOTOR_0_PERMANENT_VELOCITY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=velocity, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_motor_1_permanent(self, velocity, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_MOTOR_1_PERMANENT_VELOCITY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=velocity, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_motor_0_leaking_towards_zero(
+            self, velocity, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_MOTOR_0_LEAKY_VELOCITY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=velocity, time=time, repeat=0, delay_between_repeats=0)
+
+    def push_bot_motor_1_leaking_towards_zero(
+            self, velocity, uart_id=0, time=0):
+        if self._mode is not self.MODES.PUSH_BOT:
+            raise exceptions.ConfigurationException(
+                "The mode you configured is not the push bot, and so this "
+                "message is invalid for mode {}".format(self._mode))
+        return MultiCastCommandWithPayload(
+            key=(PUSH_BOT_MOTOR_1_LEAKY_VELOCITY |
+                 (uart_id << OFFSET_FOR_UART_ID)),
+            payload=velocity, time=time, repeat=0, delay_between_repeats=0)
 
     def set_retina_transmission(
             self, events_in_key=True, retina_pixels=128*128,
@@ -441,7 +601,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
             # verify that its what the end user wants.
             if (payload_holds_time_stamps or
                     size_of_time_stamp_in_bytes is not None):
-                raise exceptions.SynapticConfigurationException(
+                raise exceptions.ConfigurationException(
                     "If you are using payloads to store events, you cannot"
                     " have time stamps at all.")
             return MultiCastCommandWithPayload(
@@ -478,7 +638,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 payload=(time_stamps | PAYLOAD_RETINA_16_DOWN_SAMPLING),
                 time=time, repeat=repeat, delay_between_repeats=delay)
         else:
-            raise exceptions.SynapticConfigurationException(
+            raise exceptions.ConfigurationException(
                 "The no of pixels is not supported in this protocol.")
 
 
