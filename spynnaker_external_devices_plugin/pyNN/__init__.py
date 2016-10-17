@@ -33,6 +33,14 @@ from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
     push_bot_spinnaker_link_control_module_n_model import \
     PushBotSpinnakerLinkControlModuleNModel
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_accelerometer_device import \
+    PushBotSpiNNakerLinkAccelerometerDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_compass_device import \
+    PushBotSpiNNakerLinkCompassDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_gyro_device import PushBotSpiNNakerLinkGyroDevice
 
 from spynnaker_external_devices_plugin.pyNN.\
     spynnaker_external_device_plugin_manager import \

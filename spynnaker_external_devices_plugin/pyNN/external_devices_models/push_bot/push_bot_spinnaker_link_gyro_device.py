@@ -21,7 +21,7 @@ UART_ID = 0
 SENSOR_GYRO_ID = 7
 
 
-class PushBotSpiNNakerLinkCompassDevice(
+class PushBotSpiNNakerLinkGyroDevice(
         ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
         AbstractProvidesOutgoingPartitionConstraints):
 
