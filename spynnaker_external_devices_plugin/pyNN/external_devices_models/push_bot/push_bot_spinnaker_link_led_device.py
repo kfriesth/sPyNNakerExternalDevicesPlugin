@@ -25,6 +25,8 @@ class PushBotSpiNNakerLinkLEDDevice(
         # munich protocol
         self._protocol = MunichIoSpiNNakerLinkProtocol(
             mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
+        self._control_module_protocol = MunichIoSpiNNakerLinkProtocol(
+            mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
 
         # protocol specific data items
         self._uart_id = uart_id
@@ -45,12 +47,6 @@ class PushBotSpiNNakerLinkLEDDevice(
 
     def _get_start_resume_commands(self):
         commands = list()
-        if self._N_LEDS == 0:
-            commands.append(self._protocol.push_bot_led_total_period(
-                total_period=self._start_total_period, uart_id=self._uart_id,
-                time=0))
-            commands.append(self._protocol.push_bot_led_set_frequency(
-                frequency=self._start_frequency, uart_id=self._uart_id, time=0))
         if self._is_front_led:
             commands.append(self._protocol.push_bot_led_front_active_time(
                 active_time=self._start_active_time, uart_id=self._uart_id,
@@ -63,11 +59,6 @@ class PushBotSpiNNakerLinkLEDDevice(
 
     def _get_pause_stop_commands(self):
         commands = list()
-        if self._N_LEDS == 0:
-            commands.append(self._protocol.push_bot_led_total_period(
-                total_period=0, uart_id=self._uart_id, time=0))
-            commands.append(self._protocol.push_bot_led_set_frequency(
-                frequency=0, uart_id=self._uart_id, time=0))
         if self._is_front_led:
             commands.append(self._protocol.push_bot_led_front_active_time(
                 active_time=0, uart_id=self._uart_id, time=0))
@@ -86,20 +77,26 @@ class PushBotSpiNNakerLinkLEDDevice(
 
     @property
     def frequency_key(self):
-        return self._protocol.push_bot_led_set_frequency(0, self._uart_id).key
+        return self._control_module_protocol.push_bot_led_set_frequency(
+            0, self._uart_id).key
 
     @property
     def active_time_key(self):
         if self._is_front_led:
-            return self._protocol.push_bot_led_front_active_time(
-                0, self._uart_id).key
+            return self._control_module_protocol.\
+                push_bot_led_front_active_time(0, self._uart_id).key
         else:
-            return self._protocol.push_bot_led_back_active_time(
+            return self._control_module_protocol.push_bot_led_back_active_time(
                 0, self._uart_id).key
 
     @property
     def total_period_key(self):
-        return self._protocol.push_bot_led_total_period(0, self._uart_id).key
+        return self._control_module_protocol.push_bot_led_total_period(
+            0, self._uart_id).key
+
+    @property
+    def protocol_instance_key(self):
+        return self._control_module_protocol.instance_key
 
     @property
     def model_name(self):

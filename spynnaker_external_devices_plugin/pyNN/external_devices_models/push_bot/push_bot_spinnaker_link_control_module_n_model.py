@@ -1,6 +1,13 @@
-from spinn_front_end_common.abstract_models.abstract_provides_outgoing_partition_constraints import \
+from pacman.model.constraints.key_allocator_constraints.\
+    key_allocator_fixed_key_and_mask_constraint import \
+    KeyAllocatorFixedKeyAndMaskConstraint
+from pacman.model.decorators.overrides import overrides
+from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
-from spinn_front_end_common.abstract_models.impl.vertex_with_dependent_vertices import \
+from spinn_front_end_common.abstract_models.impl.\
+    vertex_with_dependent_vertices import \
     VertexWithEdgeToDependentVertices
 from spynnaker.pyNN.models.neuron.neuron_models\
     .neuron_model_leaky_integrate_and_fire \
@@ -9,19 +16,21 @@ from spynnaker.pyNN.models.neuron.synapse_types.synapse_type_exponential \
     import SynapseTypeExponential
 from spynnaker.pyNN.models.neuron.input_types.input_type_current \
     import InputTypeCurrent
-from spynnaker.pyNN.models.neuron.threshold_types.threshold_type_static \
-    import ThresholdTypeStatic
 from spynnaker.pyNN.models.neuron.abstract_population_vertex \
     import AbstractPopulationVertex
 from spynnaker_external_devices_plugin.pyNN import \
     PushBotSpiNNakerLinkMotorDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_spinnaker_link_laser_device import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_laser_device import \
     PushBotSpiNNakerLinkLaserDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_spinnaker_link_led_device import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_led_device import \
     PushBotSpiNNakerLinkLEDDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_spinnaker_link_speaker_device import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link_speaker_device import \
     PushBotSpiNNakerLinkSpeakerDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.threshold_type_push_bot_control_module import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    threshold_type_push_bot_control_module import \
     ThresholdTypePushBotControlModule
 from spinn_front_end_common.utilities import exceptions
 
@@ -41,7 +50,7 @@ class PushBotSpinnakerLinkControlModuleNModel(
     _model_based_max_atoms_per_core = 15
 
     default_parameters = {
-        'tau_m': 20.0, 'cm': 1.0, 'v_rest': -65.0, 'v_reset': -65.0,
+        'tau_m': 20.0, 'cm': 1.0, 'v_rest': 0.0, 'v_reset': 0.0,
         'tau_syn_E': 5.0, 'tau_syn_I': 5.0, 'tau_refrac': 0.1, 'i_offset': 0}
 
     # all commands will use this mask
@@ -70,52 +79,12 @@ class PushBotSpinnakerLinkControlModuleNModel(
     SPEAKER_TONE_FREQUENCY_PARTITION_ID = "Speaker_tone_set_partition_id"
     SPEAKER_MELODY_PARTITION_ID = "Speaker_melody_partition_id"
 
-    warning_message = \
-        "The control module must have only 15 neurons. The relationship " \
-        "between each neuron and its corresponding external device is as " \
-        "follows:\n\n" \
-        "0: at next timer tick the motor command is motor 0 permanent " \
-        "velocity. The velocity is deduced from the number of packets " \
-        "received by this neuron\n" \
-        "1: at next timer tick the motor command is motor 0 leaky velocity. " \
-        "The velocity is deduced from the number of packets received by " \
-        "this neuron\n" \
-        "2: at next timer tick the motor command is motor 1 permanent " \
-        "velocity. The velocity is deduced from the number of packets " \
-        "received by this neuron\n" \
-        "3: at next timer tick the motor command is motor 1 leaky velocity. " \
-        "The velocity is deduced from the number of packets received by this " \
-        "neuron\n" \
-        "4: at next timer tick, the laser total period will be set to the " \
-        "number of packets received by this neuron. \n" \
-        "5: at next timer tick, the speaker total period will be set to the " \
-        "number of packets received by this neuron. \n" \
-        "6: at the next timer tick, the leds total period will be set to " \
-        "the number of packets received by this neuron. \n" \
-        "7: at the next timer tick, the laser active timer will be set to " \
-        "the number of packets received by this neuron. \n " \
-        "8: at the next timer tick, the speaker active timer will be set to " \
-        "the number of packets received by this neuron. \n" \
-        "9: at the next timer tick, the front led active timer will be set " \
-        "to the number of packets received by this neuron. \n" \
-        "10: at the next timer tick, the back led active timer will be set " \
-        "to the number of packets received by this neuron. \n" \
-        "11: at the next timer tick, the speaker tone frequency will be set " \
-        "to the number of packets received by this neuron. \n" \
-        "12: at the next timer tick, the speaker will play melody that is " \
-        "set by the number of packets received by this neuron" \
-        "13: at the next timer tick, the led frequency will be set to the " \
-        "number of packets received by this neuron. \n" \
-        "14: at the next timer tick, the laser frequency will be set to the " \
-        "number of packets received by this neuron. \n" \
-        "at each timer tick, only one of these sets should be active:" \
-        " [0,1,2,3], [11, 12] "
-
-
     def __init__(
             self, n_neurons, spinnaker_link_id, spikes_per_second=None,
             ring_buffer_sigma=None,
             incoming_spike_buffer_size=None, constraints=None, label=None,
+
+            # defualt params for the neuron model type
             tau_m=default_parameters['tau_m'], cm=default_parameters['cm'],
             v_rest=default_parameters['v_rest'],
             v_reset=default_parameters['v_reset'],
@@ -136,10 +105,37 @@ class PushBotSpinnakerLinkControlModuleNModel(
             back_led_total_period=0, back_led_start_frequency=0,
             # the speaker bespoke setup params
             speaker_start_active_time=0, speaker_start_total_period=0,
-            speaker_start_frequency=None, speaker_melody_value=None
+            speaker_start_frequency=None, speaker_melody_value=None,
+            # neuron_ids for devices
+            motor_0_permanent_velocity_neuron_id=None,
+            motor_0_leaky_velocity_neuron_id=None,
+            motor_1_permanent_velocity_neuron_id=None,
+            motor_1_leaky_velocity_neuron_id=None,
+            laser_total_period_neuron_id=None,
+            speaker_total_period_neuron_id=None,
+            leds_total_period_neuron_id=None,
+            laser_active_time_neuron_id=None,
+            speaker_active_time_neuron_id=None,
+            front_led_active_time_neuron_id=None,
+            back_led_active_time_neuron_id=None,
+            speaker_tone_frequency_neuron_id=None,
+            speaker_melody_neuron_id=None,
+            laser_frequency_neuron_id=None,
+            led_frequency_neuron_id = None
     ):
-
+        label = "PushBotControlModule"
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+
+        # verify that only 0 or one of mutually exclusive commands is set
+        if ((motor_0_permanent_velocity_neuron_id is not None and
+                motor_0_leaky_velocity_neuron_id is not None) or
+                (motor_1_permanent_velocity_neuron_id is not None and
+                 motor_1_leaky_velocity_neuron_id is not None) or
+                (speaker_tone_frequency_neuron_id is not None and
+                 speaker_melody_neuron_id is not None)):
+            raise exceptions.ConfigurationException(
+                "Only 1 neuron can be allocated to a command, or to a motor, "
+                "or to control the tone/melody of the speaker.")
 
         laser_device = PushBotSpiNNakerLinkLaserDevice(
             spinnaker_link_id=spinnaker_link_id, board_address=board_address,
@@ -193,11 +189,6 @@ class PushBotSpinnakerLinkControlModuleNModel(
                        self.SPEAKER_ACTIVE_TIME_PARTITION_ID,
                        self.SPEAKER_TONE_FREQUENCY_PARTITION_ID,
                        self.SPEAKER_MELODY_PARTITION_ID]})
-
-        if n_neurons != self._N_NEURONS:
-            raise exceptions.ConfigurationException(self.warning_message)
-        else:
-            logger.warn(self.warning_message)
 
         # collect keys from the different components and their command
         #  partitions
@@ -257,6 +248,19 @@ class PushBotSpinnakerLinkControlModuleNModel(
         self._partition_id_to_key[self.LASER_TOTAL_PERIOD_PARTITION_ID] = \
             laser_device.total_period_key
 
+        # sort out neuron ids to be in a numerical order
+        mapping, protocol_key_offset_mapping = self._generate_neuron_mapping(
+            motor_0_permanent_velocity_neuron_id,
+            motor_0_leaky_velocity_neuron_id,
+            motor_1_permanent_velocity_neuron_id,
+            motor_1_leaky_velocity_neuron_id, laser_total_period_neuron_id,
+            speaker_total_period_neuron_id, leds_total_period_neuron_id,
+            laser_active_time_neuron_id, speaker_active_time_neuron_id,
+            front_led_active_time_neuron_id, back_led_active_time_neuron_id,
+            speaker_tone_frequency_neuron_id, speaker_melody_neuron_id,
+            laser_frequency_neuron_id, led_frequency_neuron_id, laser_device,
+            led_device_front, led_device_back, motor_0, motor_1, speaker)
+
         neuron_model = NeuronModelLeakyIntegrateAndFire(
             n_neurons, v_init, v_rest, tau_m, cm, i_offset,
             v_reset, tau_refrac)
@@ -264,22 +268,118 @@ class PushBotSpinnakerLinkControlModuleNModel(
             n_neurons, tau_syn_E, tau_syn_I)
         input_type = InputTypeCurrent()
         threshold_type = ThresholdTypePushBotControlModule(
-            n_neurons, self._partition_id_to_key.values())
+            n_neurons, uart_id, mapping, protocol_key_offset_mapping)
 
         AbstractPopulationVertex.__init__(
-            self, n_neurons=n_neurons, binary="PushBotSpiNNakerLinkControlModuleNModel.aplx", label=label,
-            max_atoms_per_core=PushBotSpinnakerLinkControlModuleNModel._model_based_max_atoms_per_core,
+            self, n_neurons=n_neurons,
+            binary="push_bot_spinnaker_link_control_module_n_model.aplx",
+            label=label,
+            max_atoms_per_core=
+            PushBotSpinnakerLinkControlModuleNModel.
+            _model_based_max_atoms_per_core,
             spikes_per_second=spikes_per_second,
             ring_buffer_sigma=ring_buffer_sigma,
             incoming_spike_buffer_size=incoming_spike_buffer_size,
-            model_name="PushBotSpiNNakerLinkControlModuleNModel", neuron_model=neuron_model,
+            model_name="PushBotSpiNNakerLinkControlModuleNModel",
+            neuron_model=neuron_model,
             input_type=input_type, synapse_type=synapse_type,
             threshold_type=threshold_type, constraints=constraints)
 
+    def _generate_neuron_mapping(self, motor_0_permanent_velocity_neuron_id,
+            motor_0_leaky_velocity_neuron_id,
+            motor_1_permanent_velocity_neuron_id,
+            motor_1_leaky_velocity_neuron_id, laser_total_period_neuron_id,
+            speaker_total_period_neuron_id, leds_total_period_neuron_id,
+            laser_active_time_neuron_id, speaker_active_time_neuron_id,
+            front_led_active_time_neuron_id, back_led_active_time_neuron_id,
+            speaker_tone_frequency_neuron_id, speaker_melody_neuron_id,
+            laser_frequency_neuron_id, led_frequency_neuron_id,
+            laser_device, led_device_front, led_device_back, motor_0, motor_1,
+            speaker):
+
+        mapping = dict()
+        key_offset_map = dict()
+
+        if motor_0_permanent_velocity_neuron_id is not None:
+            mapping[motor_0_permanent_velocity_neuron_id] = 1 << 0
+            key_offset_map[motor_0_permanent_velocity_neuron_id] = \
+                motor_0.protocol_instance_key
+        if motor_0_leaky_velocity_neuron_id is not None:
+            mapping[motor_0_leaky_velocity_neuron_id] = 1 << 1
+            key_offset_map[motor_0_leaky_velocity_neuron_id] = \
+                motor_0.protocol_instance_key
+        if motor_1_permanent_velocity_neuron_id is not None:
+            mapping[motor_1_permanent_velocity_neuron_id] = 1 << 2
+            key_offset_map[motor_1_permanent_velocity_neuron_id] = \
+                motor_1.protocol_instance_key
+        if motor_1_leaky_velocity_neuron_id is not None:
+            mapping[motor_1_leaky_velocity_neuron_id] = 1 << 3
+            key_offset_map[motor_1_leaky_velocity_neuron_id] = \
+                motor_1.protocol_instance_key
+        if laser_total_period_neuron_id is not None:
+            mapping[laser_total_period_neuron_id] = 1 << 4
+            key_offset_map[laser_total_period_neuron_id] = \
+                laser_device.protocol_instance_key
+        if speaker_total_period_neuron_id is not None:
+            mapping[speaker_total_period_neuron_id] = 1 << 5
+            key_offset_map[speaker_total_period_neuron_id] = \
+                laser_device.protocol_instance_key
+        if leds_total_period_neuron_id is not None:
+            mapping[leds_total_period_neuron_id] = 1 << 6
+            key_offset_map[leds_total_period_neuron_id] = \
+                led_device_back.protocol_instance_key
+        if laser_active_time_neuron_id is not None:
+            mapping[laser_active_time_neuron_id] = 1 << 7
+            key_offset_map[laser_active_time_neuron_id] = \
+                laser_device.protocol_instance_key
+        if speaker_active_time_neuron_id is not None:
+            mapping[speaker_active_time_neuron_id] = 1 << 8
+            key_offset_map[speaker_active_time_neuron_id] = \
+                speaker.protocol_instance_key
+        if front_led_active_time_neuron_id is not None:
+            mapping[front_led_active_time_neuron_id] = 1 << 9
+            key_offset_map[front_led_active_time_neuron_id] = \
+                led_device_front.protocol_instance_key
+        if back_led_active_time_neuron_id is not None:
+            mapping[back_led_active_time_neuron_id] = 1 << 10
+            key_offset_map[back_led_active_time_neuron_id] = \
+                led_device_front.protocol_instance_key
+        if speaker_tone_frequency_neuron_id is not None:
+            mapping[speaker_tone_frequency_neuron_id] = 1 << 11
+            key_offset_map[speaker_tone_frequency_neuron_id] = \
+                speaker.protocol_instance_key
+        if speaker_melody_neuron_id is not None:
+            mapping[speaker_melody_neuron_id] = 1 << 12
+            key_offset_map[speaker_melody_neuron_id] = \
+                speaker.protocol_instance_key
+        if led_frequency_neuron_id is not None:
+            mapping[led_frequency_neuron_id] = 1 << 13
+            key_offset_map[led_frequency_neuron_id] = \
+                led_device_back.protocol_instance_key
+        if laser_frequency_neuron_id is not None:
+            mapping[laser_frequency_neuron_id] = 1 << 14
+            key_offset_map[laser_frequency_neuron_id] = \
+                laser_device.protocol_instance_key
+
+        return mapping, key_offset_map
+
     @staticmethod
     def set_model_max_atoms_per_core(new_value):
-        PushBotSpinnakerLinkControlModuleNModel._model_based_max_atoms_per_core = new_value
+        PushBotSpinnakerLinkControlModuleNModel.\
+            _model_based_max_atoms_per_core = new_value
 
     @staticmethod
     def get_max_atoms_per_core():
-        return PushBotSpinnakerLinkControlModuleNModel._model_based_max_atoms_per_core
+        return PushBotSpinnakerLinkControlModuleNModel.\
+            _model_based_max_atoms_per_core
+
+    @overrides(AbstractProvidesOutgoingPartitionConstraints.
+               get_outgoing_partition_constraints)
+    def get_outgoing_partition_constraints(self, partition):
+        constraints = list()
+        constraints.append(
+            KeyAllocatorFixedKeyAndMaskConstraint(
+                [BaseKeyAndMask(
+                    self._partition_id_to_key[partition.identifier],
+                    self._DEFAULT_COMMAND_MASK)]))
+        return constraints

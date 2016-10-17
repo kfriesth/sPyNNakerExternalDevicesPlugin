@@ -1,4 +1,4 @@
-MODELS = robot_motor_control
+MODELS = robot_motor_control push_bot_spinnaker_link_control_module_n_model/random_folder/random_folder_2
 BUILD_DIRS := $(addprefix src/, $(MODELS))
 
 all: $(BUILD_DIRS)

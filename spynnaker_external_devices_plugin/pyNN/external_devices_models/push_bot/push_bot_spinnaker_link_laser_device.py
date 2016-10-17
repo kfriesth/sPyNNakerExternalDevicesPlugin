@@ -21,6 +21,8 @@ class PushBotSpiNNakerLinkLaserDevice(
         # munich protocol
         self._protocol = MunichIoSpiNNakerLinkProtocol(
             mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
+        self._control_module_protocol = MunichIoSpiNNakerLinkProtocol(
+            mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
 
         # protocol specific data items
         self._uart_id = uart_id
@@ -68,19 +70,23 @@ class PushBotSpiNNakerLinkLaserDevice(
         return self._uart_id
 
     @property
+    def protocol_instance_key(self):
+        return self._control_module_protocol.instance_key
+
+    @property
     def frequency_key(self):
-        return self._protocol.push_bot_laser_set_frequency(
+        return self._control_module_protocol.push_bot_laser_set_frequency(
             0, self._uart_id).key
 
     @property
     def active_time_key(self):
-        return self._protocol.push_bot_laser_config_active_time(
+        return self._control_module_protocol.push_bot_laser_config_active_time(
             0, self._uart_id).key
 
     @property
     def total_period_key(self):
-        return self._protocol.push_bot_laser_config_total_period(
-            0, self._uart_id).key
+        return self._control_module_protocol.\
+            push_bot_laser_config_total_period(0, self._uart_id).key
 
     @property
     def model_name(self):

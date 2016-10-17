@@ -38,7 +38,7 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
     def _get_start_resume_commands(self):
         commands = list()
         commands.append(self._protocol.generic_motor_enable_disable(
-            enable_disable=0, uart_id=self._uart_id, time=0))
+            enable_disable=1, uart_id=self._uart_id, time=0))
         return commands
 
     def _get_pause_stop_commands(self):
@@ -72,6 +72,10 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
         else:
             return self._protocol.push_bot_motor_1_leaking_towards_zero(
                 0, self._uart_id).key
+
+    @property
+    def protocol_instance_key(self):
+        return self._protocol.instance_key
 
     @property
     def model_name(self):

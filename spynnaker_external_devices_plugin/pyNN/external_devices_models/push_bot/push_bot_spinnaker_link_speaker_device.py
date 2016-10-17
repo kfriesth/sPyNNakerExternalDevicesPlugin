@@ -22,6 +22,8 @@ class PushBotSpiNNakerLinkSpeakerDevice(
         # munich protocol
         self._protocol = MunichIoSpiNNakerLinkProtocol(
             mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
+        self._control_module_protocol = MunichIoSpiNNakerLinkProtocol(
+            mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
 
         # protocol specific data items
         self._uart_id = uart_id
@@ -84,27 +86,33 @@ class PushBotSpiNNakerLinkSpeakerDevice(
 
     @property
     def melody_key(self):
-        return self._protocol.push_bot_speaker_set_melody(
+        return self._control_module_protocol.push_bot_speaker_set_melody(
             melody=0, uart_id=self._uart_id, time=0).key
 
     @property
     def frequency_key(self):
-        return self._protocol.push_bot_speaker_set_tone(
+        return self._control_module_protocol.push_bot_speaker_set_tone(
              frequency=0, uart_id=self._uart_id, time=0).key
 
     @property
     def active_time_key(self):
-        return self._protocol.push_bot_speaker_config_active_time(
-            active_time=0, uart_id=self._uart_id, time=0).key
+        return self._control_module_protocol.\
+            push_bot_speaker_config_active_time(
+                active_time=0, uart_id=self._uart_id, time=0).key
 
     @property
     def total_period_key(self):
-        return self._protocol.push_bot_speaker_config_total_period(
-            total_period=0, uart_id=self._uart_id, time=0).key
+        return self._control_module_protocol.\
+            push_bot_speaker_config_total_period(
+                total_period=0, uart_id=self._uart_id, time=0).key
 
     @property
     def uart_id(self):
         return self._uart_id
+
+    @property
+    def protocol_instance_key(self):
+        return self._control_module_protocol.instance_key
 
     @property
     def model_name(self):

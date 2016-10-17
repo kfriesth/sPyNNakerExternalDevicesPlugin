@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # structure of command is IIIIIII-F-DDD
 
+OFFSET_TO_END = 11
 OFFSET_TO_I = 4
 OFFSET_TO_F = 3
 OFFSET_TO_D = 0
@@ -170,7 +171,6 @@ PAYLOAD_MASTER_SLAVE_SET_MASTER_CLOCK_NOT_STARTED = 2
 PAYLOAD_MASTER_SLAVE_SET_MASTER_CLOCK_ACTIVE = 4
 
 
-
 class MunichIoSpiNNakerLinkProtocol(object):
     # types of modes supported by this protocol
     MODES = Enum(
@@ -182,35 +182,52 @@ class MunichIoSpiNNakerLinkProtocol(object):
                ('MY_ORO_BOTICS', 4),
                ('FREE', 5)])
 
-    def __init__(self, mode=None):
+    # id for the key for the instance of the protocol.
+    protocol_instance = 0
+
+    def __init__(self, mode=None, instance_key=None):
         self._mode = mode
+        if instance_key is None:
+            self._instance_key = \
+                MunichIoSpiNNakerLinkProtocol.\
+                protocol_instance << OFFSET_TO_END
+            MunichIoSpiNNakerLinkProtocol.protocol_instance += 1
+        else:
+            self._instance_key = instance_key
+
+    @property
+    def instance_key(self):
+        return self._instance_key
 
     def get_configure_master_key_command(self, new_key, time=0):
         return MultiCastCommandWithPayload(
-                key=CONFIGURE_MASTER_KEY, payload=new_key, time=time,
-                repeat=0, delay_between_repeats=0)
+            key=CONFIGURE_MASTER_KEY | self._instance_key, payload=new_key,
+            time=time, repeat=0, delay_between_repeats=0)
 
     def get_set_mode_command(self, time=0):
         if self._mode == self.MODES.PUSH_BOT:
             return MultiCastCommandWithPayload(
-                key=CHANGE_MODE, payload=PAYLOAD_SET_TO_PUSH_BOT_MODE,
-                time=time, repeat=0, delay_between_repeats=0)
+                key=CHANGE_MODE | self._instance_key,
+                payload=PAYLOAD_SET_TO_PUSH_BOT_MODE, time=time, repeat=0,
+                delay_between_repeats=0)
         if self._mode == self.MODES.SPOMNIBOT:
             return MultiCastCommandWithPayload(
-                key=CHANGE_MODE, payload=PAYLOAD_SET_TO_SPOMNI_BOT_MODE,
-                time=time, repeat=0, delay_between_repeats=0)
+                key=CHANGE_MODE | self._instance_key,
+                payload=PAYLOAD_SET_TO_SPOMNI_BOT_MODE, time=time, repeat=0,
+                delay_between_repeats=0)
         if self._mode == self.MODES.BALL_BALANCER:
             return MultiCastCommandWithPayload(
-                key=CHANGE_MODE, payload=PAYLOAD_SET_TO_BALL_BALANCER_MODE,
-                time=time, repeat=0, delay_between_repeats=0)
+                key=CHANGE_MODE | self._instance_key,
+                payload=PAYLOAD_SET_TO_BALL_BALANCER_MODE, time=time, repeat=0,
+                delay_between_repeats=0)
         if self._mode == self.MODES.MY_ORO_BOTICS:
             return MultiCastCommandWithPayload(
-                key=CHANGE_MODE,
+                key=CHANGE_MODE | self._instance_key,
                 payload=PAYLOAD_SET_TO_MY_OROBOTICS_PROJECT_MODE,
                 time=time, repeat=0, delay_between_repeats=0)
         if self._mode == self.MODES.FREE:
             return MultiCastCommandWithPayload(
-                key=CHANGE_MODE,
+                key=CHANGE_MODE | self._instance_key,
                 payload=PAYLOAD_SET_TO_FREE_MODE,
                 time=time, repeat=0, delay_between_repeats=0)
         raise exceptions.ConfigurationException(
@@ -219,116 +236,128 @@ class MunichIoSpiNNakerLinkProtocol(object):
     def set_retina_transmission_key(self, new_key=None, uart_id=0, time=0):
         return MultiCastCommandWithPayload(
             key=(ACTIVE_RETINA_EVENT_STREAMING_SET_KEY |
-                 uart_id << OFFSET_FOR_UART_ID),
+                 uart_id << OFFSET_FOR_UART_ID | self._instance_key),
             payload=new_key, time=time, repeat=0, delay_between_repeats=0)
 
     def disable_retina_event_streaming(self, uart_id=0, time=0):
         return MultiCastCommandWithoutPayload(
             key=(DISABLE_RETINA_EVENT_STREAMING |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID)  | self._instance_key),
             time=time, repeat=0, delay_between_repeats=0)
 
     def master_slave_use_internal_counter(self, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=PAYLOAD_MASTER_SLAVE_USE_INTERNAL_COUNTER,
             time=time, repeat=0, delay_between_repeats=0)
 
     def master_slave_set_slave(self, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=PAYLOAD_MASTER_SLAVE_SET_SLAVE,
             time=time, repeat=0, delay_between_repeats=0)
 
     def master_slave_set_master_clock_not_started(self, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=PAYLOAD_MASTER_SLAVE_SET_MASTER_CLOCK_NOT_STARTED,
             time=time, repeat=0, delay_between_repeats=0)
 
     def master_slave_set_master_clock_active(self, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(MASTER_SLAVE_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=PAYLOAD_MASTER_SLAVE_SET_MASTER_CLOCK_ACTIVE,
             time=time, repeat=0, delay_between_repeats=0)
 
     def bias_values(self, bias_id, bias_value, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(BIAS_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(BIAS_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=((bias_id << 0) | (bias_value << 8)),
             time=time, repeat=0, delay_between_repeats=0)
 
     def reset_retina(self, uart_id=0, time=0):
         return MultiCastCommandWithoutPayload(
-            key=(RESET_RETINA_KEY | (uart_id << OFFSET_FOR_UART_ID)),
+            key=(RESET_RETINA_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             time=time, repeat=0, delay_between_repeats=0)
 
     def turn_off_sensor_reporting(self, sensor_id, time):
         return MultiCastCommandWithPayload(
-            key=SENSOR_REPORTING_OFF_KEY,
+            key=SENSOR_REPORTING_OFF_KEY | self._instance_key,
             payload=(sensor_id << SENSOR_ID_OFFSET),
             time=time, repeat=0, delay_between_repeats=0)
 
     def poll_sensors_once(self, sensor_id, time):
         return MultiCastCommandWithPayload(
-            key=POLL_SENSORS_ONCE_KEY,
+            key=POLL_SENSORS_ONCE_KEY | self._instance_key,
             payload=(sensor_id << SENSOR_ID_OFFSET),
             time=time, repeat=0, delay_between_repeats=0)
 
     def poll_individual_sensor_continuously(self, sensor_id, time, time_in_ms):
         return MultiCastCommandWithPayload(
-            key=POLL_SENSORS_CONTINUOUSLY_KEY,
+            key=POLL_SENSORS_CONTINUOUSLY_KEY | self._instance_key,
             payload=((sensor_id << SENSOR_ID_OFFSET) |
                     (time_in_ms << OFFSET_FOR_SENSOR_TIME)),
             time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor_enable_disable(self, enable_disable, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=DISABLE_MOTOR_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(DISABLE_MOTOR_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=enable_disable,
             time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor_total_period_duration(self, time_in_ms, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_RUN_FOR_PERIOD_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(MOTOR_RUN_FOR_PERIOD_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=time_in_ms,
             time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor0_raw_output_permanent(self, pwm_signal, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_0_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(MOTOR_0_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor1_raw_output_permanent(self, pwm_signal, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_1_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(MOTOR_1_RAW_PERM_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor0_raw_output_leak_to_0(self, pwm_signal, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_0_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(MOTOR_0_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor1_raw_output_leak_to_0(self, pwm_signal, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=MOTOR_1_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID),
+            key=(MOTOR_1_RAW_LEAK_KEY | (uart_id << OFFSET_FOR_UART_ID) |
+                 self._instance_key),
             payload=pwm_signal, time=time, repeat=0, delay_between_repeats=0)
 
     def pwm_pin_output_timer_a_duration(self, timer_period, time, uart_id):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_A_TOTAL_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
-            time=time, repeat=0, delay_between_repeats=0)
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
+            payload=timer_period, time=time, repeat=0, delay_between_repeats=0)
 
     def pwm_pin_output_timer_b_duration(self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MOTOR_TIMER_B_TOTAL_PERIOD_KEY |
+            key=(MOTOR_TIMER_B_TOTAL_PERIOD_KEY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
             time=time, repeat=0, delay_between_repeats=0)
 
     def pwm_pin_output_timer_c_duration(self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MOTOR_TIMER_C_TOTAL_PERIOD_KEY |
+            key=(MOTOR_TIMER_C_TOTAL_PERIOD_KEY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)), payload=timer_period,
             time=time, repeat=0, delay_between_repeats=0)
 
@@ -336,7 +365,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_A_CHANNEL_0_ACTIVE_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
@@ -344,7 +373,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_A_CHANNEL_1_ACTIVE_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
@@ -352,7 +381,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_B_CHANNEL_0_ACTIVE_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
@@ -360,7 +389,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_B_CHANNEL_1_ACTIVE_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
@@ -368,42 +397,42 @@ class MunichIoSpiNNakerLinkProtocol(object):
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
             key=(MOTOR_TIMER_C_CHANNEL_0_ACTIVE_PERIOD_KEY |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
     def pwm_pin_output_timer_c_channel_1_ratio(
             self, timer_period, time, uart_id=0):
         return MultiCastCommandWithPayload(
-            key=(MOTOR_TIMER_C_CHANNEL_1_ACTIVE_PERIOD_KEY  |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+            key=(MOTOR_TIMER_C_CHANNEL_1_ACTIVE_PERIOD_KEY |
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=timer_period, time=time, repeat=0,
             delay_between_repeats=0)
 
     def query_state_of_io_lines(self, time):
         return MultiCastCommandWithoutPayload(
-            key=QUERY_STATES_LINES_KEY, time=time, repeat=0,
-            delay_between_repeats=0)
+            key=QUERY_STATES_LINES_KEY | self._instance_key, time=time,
+            repeat=0, delay_between_repeats=0)
 
     def set_output_pattern_for_payload(self, payload, time):
         return MultiCastCommandWithPayload(
-            key=SET_OUTPUT_PATTERN_KEY, payload=payload,
+            key=SET_OUTPUT_PATTERN_KEY | self._instance_key, payload=payload,
             time=time, repeat=0, delay_between_repeats=0)
 
     def add_payload_logic_to_current_output(self, payload, time):
         return MultiCastCommandWithPayload(
-            key=ADD_PAYLOAD_TO_CURRENT_OUTPUT_KEY, payload=payload,
-            time=time, repeat=0, delay_between_repeats=0)
+            key=ADD_PAYLOAD_TO_CURRENT_OUTPUT_KEY | self._instance_key,
+            payload=payload, time=time, repeat=0, delay_between_repeats=0)
 
     def remove_payload_logic_to_current_output(self, payload, time):
         return MultiCastCommandWithPayload(
-            key=REMOVE_PAYLOAD_TO_CURRENT_OUTPUT_KEY, payload=payload,
-            time=time, repeat=0, delay_between_repeats=0)
+            key=REMOVE_PAYLOAD_TO_CURRENT_OUTPUT_KEY | self._instance_key,
+            payload=payload, time=time, repeat=0, delay_between_repeats=0)
 
     def set_payload_pins_to_high_impedance(self, payload, time):
         return MultiCastCommandWithPayload(
-            key=SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY, payload=payload,
-            time=time, repeat=0, delay_between_repeats=0)
+            key=SET_PAYLOAD_TO_HIGH_IMPEDANCE_KEY | self._instance_key,
+            payload=payload, time=time, repeat=0, delay_between_repeats=0)
 
     def push_bot_laser_config_total_period(
             self, total_period, uart_id=0, time=0):
@@ -413,7 +442,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
             key=(PUSH_BOT_LASER_CONFIG_TOTAL_PERIOD |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=total_period, time=time, repeat=0, delay_between_repeats=0)
 
     def push_bot_laser_config_active_time(self, active_time, uart_id=0, time=0):
@@ -423,7 +452,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
             key=(PUSH_BOT_LASER_CONFIG_ACTIVE_TIME |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=active_time, time=time, repeat=0, delay_between_repeats=0)
 
     def push_bot_laser_set_frequency(self, frequency, uart_id=0, time=0):
@@ -432,7 +461,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_LASER_FREQUENCY |
+            key=(PUSH_BOT_LASER_FREQUENCY | self._instance_key |
                  (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
             payload=frequency, time=time, repeat=0, delay_between_repeats=0)
 
@@ -444,7 +473,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
             key=(PUSH_BOT_SPEAKER_CONFIG_TOTAL_PERIOD |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=total_period, time=time, repeat=0, delay_between_repeats=0)
 
     def push_bot_speaker_config_active_time(
@@ -455,7 +484,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
             key=(PUSH_BOT_SPEAKER_CONFIG_ACTIVE_TIME |
-                 (uart_id << OFFSET_FOR_UART_ID)),
+                 (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
             payload=active_time, time=time, repeat=0, delay_between_repeats=0)
 
     def push_bot_speaker_set_tone(self, frequency, uart_id=0, time=0):
@@ -464,7 +493,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_SPEAKER_TONE_BEEP |
+            key=(PUSH_BOT_SPEAKER_TONE_BEEP | self._instance_key |
                  (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
             payload=frequency, time=time, repeat=0, delay_between_repeats=0)
 
@@ -474,7 +503,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_SPEAKER_TONE_MELODY |
+            key=(PUSH_BOT_SPEAKER_TONE_MELODY | self._instance_key |
                  (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
             payload=melody, time=time, repeat=0, delay_between_repeats=0)
 
@@ -484,7 +513,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_LED_CONFIG_TOTAL_PERIOD |
+            key=(PUSH_BOT_LED_CONFIG_TOTAL_PERIOD | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=total_period, time=time, repeat=0, delay_between_repeats=0)
 
@@ -494,7 +523,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_LED_BACK_CONFIG_ACTIVE_TIME |
+            key=(PUSH_BOT_LED_BACK_CONFIG_ACTIVE_TIME | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=active_time, time=time, repeat=0, delay_between_repeats=0)
 
@@ -504,7 +533,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_LED_FRONT_CONFIG_ACTIVE_TIME |
+            key=(PUSH_BOT_LED_FRONT_CONFIG_ACTIVE_TIME | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=active_time, time=time, repeat=0, delay_between_repeats=0)
 
@@ -514,7 +543,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_LED_FREQUENCY |
+            key=(PUSH_BOT_LED_FREQUENCY | self._instance_key |
                  (uart_id << PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER)),
             payload=frequency, time=time, repeat=0, delay_between_repeats=0)
 
@@ -524,7 +553,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_MOTOR_0_PERMANENT_VELOCITY |
+            key=(PUSH_BOT_MOTOR_0_PERMANENT_VELOCITY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=velocity, time=time, repeat=0, delay_between_repeats=0)
 
@@ -534,7 +563,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_MOTOR_1_PERMANENT_VELOCITY |
+            key=(PUSH_BOT_MOTOR_1_PERMANENT_VELOCITY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=velocity, time=time, repeat=0, delay_between_repeats=0)
 
@@ -545,7 +574,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_MOTOR_0_LEAKY_VELOCITY |
+            key=(PUSH_BOT_MOTOR_0_LEAKY_VELOCITY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=velocity, time=time, repeat=0, delay_between_repeats=0)
 
@@ -556,7 +585,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
                 "The mode you configured is not the push bot, and so this "
                 "message is invalid for mode {}".format(self._mode))
         return MultiCastCommandWithPayload(
-            key=(PUSH_BOT_MOTOR_1_LEAKY_VELOCITY |
+            key=(PUSH_BOT_MOTOR_1_LEAKY_VELOCITY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=velocity, time=time, repeat=0, delay_between_repeats=0)
 
@@ -606,35 +635,35 @@ class MunichIoSpiNNakerLinkProtocol(object):
                     " have time stamps at all.")
             return MultiCastCommandWithPayload(
                 key=(ACTIVE_RETINA_EVENT_STREAMING_KEYS_CONFIGURATION |
-                     (uart_id << OFFSET_FOR_UART_ID)),
+                     (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
                 payload=(PAYLOAD_NO_TIMESTAMPS |
                          PAYLOAD_RETINA_NO_DOWN_SAMPLING_IN_PAYLOAD),
                 time=time, repeat=repeat, delay_between_repeats=delay)
 
-    @staticmethod
-    def _key_retina(retina_pixels, time_stamps, uart_id, time, repeat, delay):
+    def _key_retina(
+            self, retina_pixels, time_stamps, uart_id, time, repeat, delay):
         if retina_pixels == 128 * 128:
             return MultiCastCommandWithPayload(
                 key=(ACTIVE_RETINA_EVENT_STREAMING_KEYS_CONFIGURATION |
-                     (uart_id << OFFSET_FOR_UART_ID)),
+                     (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
                 payload=(time_stamps | PAYLOAD_RETINA_NO_DOWN_SAMPLING),
                 time=time, repeat=repeat, delay_between_repeats=delay)
         if retina_pixels == 64 * 64:
             return MultiCastCommandWithPayload(
                 key=(ACTIVE_RETINA_EVENT_STREAMING_KEYS_CONFIGURATION |
-                     (uart_id << OFFSET_FOR_UART_ID)),
+                     (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
                 payload=(time_stamps | PAYLOAD_RETINA_64_DOWN_SAMPLING),
                 time=time, repeat=repeat, delay_between_repeats=delay)
         if retina_pixels == 32 * 32:
             return MultiCastCommandWithPayload(
                 key=(ACTIVE_RETINA_EVENT_STREAMING_KEYS_CONFIGURATION |
-                     (uart_id << OFFSET_FOR_UART_ID)),
+                     (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
                 payload=(time_stamps | PAYLOAD_RETINA_32_DOWN_SAMPLING),
                 time=time, repeat=repeat, delay_between_repeats=delay)
         if retina_pixels == 16 * 16:
             return MultiCastCommandWithPayload(
                 key=(ACTIVE_RETINA_EVENT_STREAMING_KEYS_CONFIGURATION |
-                     (uart_id << OFFSET_FOR_UART_ID)),
+                     (uart_id << OFFSET_FOR_UART_ID) | self._instance_key),
                 payload=(time_stamps | PAYLOAD_RETINA_16_DOWN_SAMPLING),
                 time=time, repeat=repeat, delay_between_repeats=delay)
         else:
