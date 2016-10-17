@@ -73,7 +73,12 @@ class PushBotSpiNNakerLinkRetinaDevice(ApplicationSpiNNakerLinkVertex,
             new_key_command)
 
         commands = list()
-        commands.append(self._protocol.get_set_mode_command())
+
+        # add mode command if not done already
+        if not self._protocol.has_set_off_configuration_command():
+            commands.append(self._protocol.get_set_mode_command())
+
+        # device specific commands
         commands.append(self._protocol.disable_retina_event_streaming(
             uart_id=self.UART_ID))
         commands.append(new_key_command)

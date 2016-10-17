@@ -37,6 +37,12 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
 
     def _get_start_resume_commands(self):
         commands = list()
+
+        # add mode command if not done already
+        if not self._protocol.has_set_off_configuration_command():
+            commands.append(self._protocol.get_set_mode_command())
+
+        # device specific commands
         commands.append(self._protocol.generic_motor_enable_disable(
             enable_disable=1, uart_id=self._uart_id, time=0))
         return commands

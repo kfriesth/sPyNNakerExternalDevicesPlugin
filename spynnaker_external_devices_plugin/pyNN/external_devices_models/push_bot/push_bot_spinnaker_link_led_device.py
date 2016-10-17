@@ -47,6 +47,12 @@ class PushBotSpiNNakerLinkLEDDevice(
 
     def _get_start_resume_commands(self):
         commands = list()
+
+        # add mode command if not done already
+        if not self._protocol.has_set_off_configuration_command():
+            commands.append(self._protocol.get_set_mode_command())
+
+        # device specific commands
         if self._is_front_led:
             commands.append(self._protocol.push_bot_led_front_active_time(
                 active_time=self._start_active_time, uart_id=self._uart_id,

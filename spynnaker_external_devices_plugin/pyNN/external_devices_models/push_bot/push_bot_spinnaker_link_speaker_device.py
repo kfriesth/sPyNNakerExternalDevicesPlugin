@@ -53,6 +53,12 @@ class PushBotSpiNNakerLinkSpeakerDevice(
 
     def _get_start_resume_commands(self):
         commands = list()
+
+        # add mode command if not done already
+        if not self._protocol.has_set_off_configuration_command():
+            commands.append(self._protocol.get_set_mode_command())
+
+        # device specific commands
         commands.append(self._protocol.push_bot_speaker_config_total_period(
             total_period=self._start_total_period, uart_id=self._uart_id,
             time=0))

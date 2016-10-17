@@ -184,6 +184,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
 
     # id for the key for the instance of the protocol.
     protocol_instance = 0
+    has_set_off_mode_configuration_command = False
 
     def __init__(self, mode=None, instance_key=None):
         self._mode = mode
@@ -195,6 +196,11 @@ class MunichIoSpiNNakerLinkProtocol(object):
         else:
             self._instance_key = instance_key
 
+    @staticmethod
+    def has_set_off_configuration_command():
+        return MunichIoSpiNNakerLinkProtocol.\
+            has_set_off_mode_configuration_command
+
     @property
     def instance_key(self):
         return self._instance_key
@@ -205,6 +211,8 @@ class MunichIoSpiNNakerLinkProtocol(object):
             time=time, repeat=0, delay_between_repeats=0)
 
     def get_set_mode_command(self, time=0):
+        MunichIoSpiNNakerLinkProtocol.\
+            has_set_off_mode_configuration_command = True
         if self._mode == self.MODES.PUSH_BOT:
             return MultiCastCommandWithPayload(
                 key=CHANGE_MODE | self._instance_key,

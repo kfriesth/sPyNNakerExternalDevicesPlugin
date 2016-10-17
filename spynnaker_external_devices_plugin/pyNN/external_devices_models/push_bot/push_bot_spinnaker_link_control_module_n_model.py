@@ -285,7 +285,9 @@ class PushBotSpinnakerLinkControlModuleNModel(
             input_type=input_type, synapse_type=synapse_type,
             threshold_type=threshold_type, constraints=constraints)
 
-    def _generate_neuron_mapping(self, motor_0_permanent_velocity_neuron_id,
+    @staticmethod
+    def _generate_neuron_mapping(
+            motor_0_permanent_velocity_neuron_id,
             motor_0_leaky_velocity_neuron_id,
             motor_1_permanent_velocity_neuron_id,
             motor_1_leaky_velocity_neuron_id, laser_total_period_neuron_id,
@@ -293,9 +295,8 @@ class PushBotSpinnakerLinkControlModuleNModel(
             laser_active_time_neuron_id, speaker_active_time_neuron_id,
             front_led_active_time_neuron_id, back_led_active_time_neuron_id,
             speaker_tone_frequency_neuron_id, speaker_melody_neuron_id,
-            laser_frequency_neuron_id, led_frequency_neuron_id,
-            laser_device, led_device_front, led_device_back, motor_0, motor_1,
-            speaker):
+            laser_frequency_neuron_id, led_frequency_neuron_id, laser_device,
+            led_device_front, led_device_back, motor_0, motor_1, speaker):
 
         mapping = dict()
         key_offset_map = dict()
