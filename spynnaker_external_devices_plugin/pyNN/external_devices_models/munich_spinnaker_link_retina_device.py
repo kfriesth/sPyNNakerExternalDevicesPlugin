@@ -126,7 +126,8 @@ class MunichRetinaDevice(
 
     def _pause_stop_commands(self):
         commands = list()
-         # disable retina
+
+        # disable retina
         if self._position == self.RIGHT_RETINA:
             disable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_DISABLE
         else:

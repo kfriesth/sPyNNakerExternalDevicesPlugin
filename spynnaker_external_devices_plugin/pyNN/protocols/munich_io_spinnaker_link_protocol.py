@@ -19,11 +19,14 @@ OFFSET_TO_D = 0
 OFFSET_FOR_TIMESTAMPS = 29
 OFFSET_FOR_RETINA_SIZE = 26
 SENSOR_ID_OFFSET = 27
+SENSOR_OUTGOING_OFFSET_TO_S = 0
+SENSOR_OUTGOING_OFFSET_TO_D = 2
+SENSOR_OUTGOING_OFFSET_TO_I = 7
 
 OFFSET_FOR_UART_ID = 2 + SENSOR_ID_OFFSET
 PUSH_BOT_UART_OFFSET_SPEAKER_LED_LASER = 1
 
-OFFSET_FOR_SENSOR_TIME = 31
+OFFSET_FOR_SENSOR_TIME = 0
 
 # unused parts of protocol
 UNUSED_ID_0_DIM_6_KEY = (0 << OFFSET_TO_I) | (6 << OFFSET_TO_D)
@@ -310,7 +313,7 @@ class MunichIoSpiNNakerLinkProtocol(object):
         return MultiCastCommandWithPayload(
             key=POLL_SENSORS_CONTINUOUSLY_KEY | self._instance_key,
             payload=((sensor_id << SENSOR_ID_OFFSET) |
-                    (time_in_ms << OFFSET_FOR_SENSOR_TIME)),
+                     (time_in_ms << OFFSET_FOR_SENSOR_TIME)),
             time=time, repeat=0, delay_between_repeats=0)
 
     def generic_motor_enable_disable(self, enable_disable, time, uart_id=0):
@@ -596,6 +599,11 @@ class MunichIoSpiNNakerLinkProtocol(object):
             key=(PUSH_BOT_MOTOR_1_LEAKY_VELOCITY | self._instance_key |
                  (uart_id << OFFSET_FOR_UART_ID)),
             payload=velocity, time=time, repeat=0, delay_between_repeats=0)
+
+    @staticmethod
+    def sensor_transmission_key(sensor_id, uart_id=0):
+        return ((sensor_id << SENSOR_OUTGOING_OFFSET_TO_D) |
+                (uart_id << SENSOR_OUTGOING_OFFSET_TO_I))
 
     def set_retina_transmission(
             self, events_in_key=True, retina_pixels=128*128,
