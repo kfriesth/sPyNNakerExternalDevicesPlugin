@@ -30,6 +30,8 @@ from spinn_front_end_common.abstract_models.impl.\
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
 from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,7 @@ class MunichMotorDevice(
         ApplicationDataSpecableVertex, AbstractHasAssociatedBinary,
         ApplicationVertex, VertexWithEdgeToDependentVertices,
         AbstractProvidesOutgoingPartitionConstraints,
-        AbstractBinaryUsesSimulationRun):
+        AbstractBinaryUsesSimulationRun, ProvidesKeyToAtomMappingImpl):
     """ An Omnibot motor control device - has a real vertex and an external\
         device vertex
     """
@@ -75,6 +77,7 @@ class MunichMotorDevice(
         VertexWithEdgeToDependentVertices.__init__(
             self, {_MunichMotorDevice(spinnaker_link_id): MOTOR_PARTITION_ID})
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
         self._speed = speed
         self._sample_time = sample_time

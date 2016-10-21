@@ -37,6 +37,7 @@ from spinn_front_end_common.utilities import exceptions
 import logging
 from collections import OrderedDict
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -373,6 +374,13 @@ class PushBotSpinnakerLinkControlModuleNModel(
     def get_max_atoms_per_core():
         return PushBotSpinnakerLinkControlModuleNModel.\
             _model_based_max_atoms_per_core
+
+    def routing_key_partition_atom_mapping(self, routing_info, partition):
+        atom_to_key_map = list()
+        key = self._partition_id_to_key[partition.identifier]
+        atom_id = self._mapping[key]
+        atom_to_key_map.append((atom_id, key))
+        return atom_to_key_map
 
     @overrides(AbstractProvidesOutgoingPartitionConstraints.
                get_outgoing_partition_constraints)

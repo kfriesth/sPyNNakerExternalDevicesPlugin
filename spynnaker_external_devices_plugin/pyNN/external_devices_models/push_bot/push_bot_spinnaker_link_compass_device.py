@@ -13,6 +13,8 @@ from spinn_front_end_common.abstract_models.\
 
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 from spynnaker_external_devices_plugin.pyNN.protocols.\
     munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
@@ -23,7 +25,8 @@ SENSOR_COMPASS_ID = 9
 
 class PushBotSpiNNakerLinkCompassDevice(
         ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-        AbstractProvidesOutgoingPartitionConstraints):
+        AbstractProvidesOutgoingPartitionConstraints,
+        ProvidesKeyToAtomMappingImpl):
 
     def __init__(
             self, spinnaker_link_id, sensor_in_millisecond=100, motor_id=0,
@@ -46,6 +49,7 @@ class PushBotSpiNNakerLinkCompassDevice(
             pause_stop_commands=self._get_pause_stop_commands(),
             timed_commands=self._get_timed_commands())
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
     def _get_start_resume_commands(self):
         commands = list()

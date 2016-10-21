@@ -13,6 +13,9 @@ from spynnaker.pyNN.spinnaker import executable_finder
 from spynnaker.pyNN.utilities import conf
 from spynnaker.pyNN.utilities import constants
 from spynnaker_external_devices_plugin.pyNN import model_binaries
+from spynnaker_external_devices_plugin.pyNN.connections.\
+    push_bot_live_spikes_connection import \
+    PushBotLiveSpikesConnection
 from spynnaker_external_devices_plugin.pyNN.connections\
     .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
@@ -25,6 +28,9 @@ from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_motor_device import MunichMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_retina_device import MunichRetinaDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_ethernet_control_module_n_model import \
+    PushBotEthernetControlModuleNModel
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
     push_bot_spinnaker_link_motor_device import PushBotSpiNNakerLinkMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
@@ -47,6 +53,10 @@ from spynnaker_external_devices_plugin.pyNN.\
     SpynnakerExternalDevicePluginManager
 from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
     import SpikeInjector as SpynnakerExternalDeviceSpikeInjector
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 executable_finder.add_path(os.path.dirname(model_binaries.__file__))
 spynnaker_external_devices = SpynnakerExternalDevicePluginManager()
@@ -205,44 +215,182 @@ def SpikeInjector(
         n_neurons=n_neurons, label=label, port=port, virtual_key=virtual_key)
 
 
-def create_push_bot_ethernet(injector_pop, spinnaker_packet_port, sending_pops,
-                             sending_pops_callbacks):
+def push_bot_ethernet_connection(
+        spinnaker_control_packet_port, spinnaker_injection_packet_port,
+        push_bot_ip_address, control_n_neurons, ip_address=None,
+        spikes_per_second=None, ring_buffer_sigma=None,
+        incoming_spike_buffer_size=None, constraints=None, label=None,
+        # defualt params for the neuron model type
+        tau_m=PushBotEthernetControlModuleNModel.default_parameters['tau_m'],
+        cm=PushBotEthernetControlModuleNModel.default_parameters['cm'],
+        v_rest=PushBotEthernetControlModuleNModel.default_parameters['v_rest'],
+        v_reset=
+        PushBotEthernetControlModuleNModel.default_parameters['v_reset'],
+        tau_syn_E=
+        PushBotEthernetControlModuleNModel.default_parameters['tau_syn_E'],
+        tau_syn_I=
+        PushBotEthernetControlModuleNModel.default_parameters['tau_syn_I'],
+        tau_refrac=
+        PushBotEthernetControlModuleNModel.default_parameters['tau_refrac'],
+        i_offset=
+        PushBotEthernetControlModuleNModel.default_parameters['i_offset'],
+        v_init=None,
+        # global for all devices that this control module works with
+        board_address=None, uart_id=0, control_constraints=None,
+        # the laser bespoke setup params
+        laser_start_active_time=0, laser_start_total_period=0,
+        laser_start_frequency=0,
+        # the front led bespoke setup params
+        front_led_start_active_time=0,
+        front_led_total_period=0, front_led_start_frequency=0,
+        # the back led bespoke setup params
+        back_led_start_active_time=0,
+        back_led_total_period=0, back_led_start_frequency=0,
+        # the speaker bespoke setup params
+        speaker_start_active_time=0, speaker_start_total_period=0,
+        speaker_start_frequency=None, speaker_melody_value=None,
+        # neuron_ids for devices
+        motor_0_permanent_velocity_neuron_id=None,
+        motor_0_leaky_velocity_neuron_id=None,
+        motor_1_permanent_velocity_neuron_id=None,
+        motor_1_leaky_velocity_neuron_id=None,
+        laser_total_period_neuron_id=None,
+        speaker_total_period_neuron_id=None,
+        leds_total_period_neuron_id=None,
+        laser_active_time_neuron_id=None,
+        speaker_active_time_neuron_id=None,
+        front_led_active_time_neuron_id=None,
+        back_led_active_time_neuron_id=None,
+        speaker_tone_frequency_neuron_id=None,
+        speaker_melody_neuron_id=None,
+        laser_frequency_neuron_id=None,
+        led_frequency_neuron_id=None,
+        database_notify_port_num=None, database_notify_host=None,
+        database_ack_port_num=None):
     """ helper method that builds the bridge between the push bot communicating
     via wifi and the spinnaker machine its going to feed data into and receive
     data from
 
-    :param injector_pop:
-    :param spinnaker_packet_port:
-    :param sending_pops:
+    :param spinnaker_control_packet_port:
+    :param spinnaker_injection_packet_port:
+    :param push_bot_ip_address:
+    :param control_n_neurons:
+    :param ip_address:
+    :param spikes_per_second:
+    :param ring_buffer_sigma:
+    :param incoming_spike_buffer_size:
+    :param constraints:
+    :param label:
+    :param tau_m:
+    :param cm:
+    :param v_rest:
+    :param v_reset:
+    :param tau_syn_E:
+    :param tau_syn_I:
+    :param tau_refrac:
+    :param i_offset:
+    :param v_init:
+    :param board_address:
+    :param uart_id:
+    :param control_constraints:
+    :param laser_start_active_time:
+    :param laser_start_total_period:
+    :param laser_start_frequency:
+    :param front_led_start_active_time:
+    :param front_led_total_period:
+    :param front_led_start_frequency:
+    :param back_led_start_active_time:
+    :param back_led_total_period:
+    :param back_led_start_frequency:
+    :param speaker_start_active_time:
+    :param speaker_start_total_period:
+    :param speaker_start_frequency:
+    :param speaker_melody_value:
+    :param motor_0_permanent_velocity_neuron_id:
+    :param motor_0_leaky_velocity_neuron_id:
+    :param motor_1_permanent_velocity_neuron_id:
+    :param motor_1_leaky_velocity_neuron_id:
+    :param laser_total_period_neuron_id:
+    :param speaker_total_period_neuron_id:
+    :param leds_total_period_neuron_id:
+    :param laser_active_time_neuron_id:
+    :param speaker_active_time_neuron_id:
+    :param front_led_active_time_neuron_id:
+    :param back_led_active_time_neuron_id:
+    :param speaker_tone_frequency_neuron_id:
+    :param speaker_melody_neuron_id:
+    :param laser_frequency_neuron_id:
+    :param led_frequency_neuron_id:
+    :param database_notify_port_num:
+    :param database_notify_host:
+    :param database_ack_port_num:
     :return:
     """
+    if ip_address is None:
+        ip_address = conf.config.get("Recording", "live_spike_host")
 
-    receive_labels = list()
-    for receive_pop in sending_pops:
-        receive_labels.append(receive_pop.label)
-        activate_live_output_for(receive_pop, port=spinnaker_packet_port)
+    if database_notify_port_num is None:
+        database_notify_port_num = conf.config.getint("Database",
+                                                      "notify_port")
+    if database_notify_host is None:
+        database_notify_host = conf.config.get("Database", "notify_hostname")
+    if database_ack_port_num is None:
+        database_ack_port_num = conf.config.get("Database", "listen_port")
+        if database_ack_port_num == "None":
+            database_ack_port_num = None
 
-    live_spikes_connection = SpynnakerLiveSpikesConnection(
-        receive_labels=receive_labels,
-        send_labels=[injector_pop.label])
+    connection = PushBotLiveSpikesConnection(
+        spinnaker_control_packet_port=spinnaker_control_packet_port,
+        spinnaker_injection_packet_port=spinnaker_injection_packet_port,
+        ip_address=ip_address,
+        spynnaker_external_devices=spynnaker_external_devices,
+        push_bot_ip_address=push_bot_ip_address,
+        control_n_neurons=control_n_neurons,
+        spikes_per_second=spikes_per_second,
+        ring_buffer_sigma=ring_buffer_sigma,
+        incoming_spike_buffer_size=incoming_spike_buffer_size,
+        control_constraints=control_constraints, tau_m=tau_m, cm=cm,
+        v_rest=v_rest, v_reset=v_reset, tau_syn_E=tau_syn_E,
+        tau_syn_I=tau_syn_I, tau_refrac=tau_refrac, i_offset=i_offset,
+        v_init=v_init, board_address=board_address, uart_id=uart_id,
+        laser_start_active_time=laser_start_active_time,
+        laser_start_total_period=laser_start_total_period,
+        laser_start_frequency=laser_start_frequency,
+        front_led_start_active_time=front_led_start_active_time,
+        front_led_total_period=front_led_total_period,
+        front_led_start_frequency=front_led_start_frequency,
+        back_led_start_active_time=back_led_start_active_time,
+        back_led_total_period=back_led_total_period,
+        back_led_start_frequency=back_led_start_frequency,
+        speaker_start_active_time=speaker_start_active_time,
+        speaker_start_total_period=speaker_start_total_period,
+        speaker_start_frequency=speaker_start_frequency,
+        speaker_melody_value=speaker_melody_value,
+        motor_0_permanent_velocity_neuron_id=
+            motor_0_permanent_velocity_neuron_id,
+        motor_0_leaky_velocity_neuron_id=motor_0_leaky_velocity_neuron_id,
+        motor_1_permanent_velocity_neuron_id=
+        motor_1_permanent_velocity_neuron_id,
+        motor_1_leaky_velocity_neuron_id=motor_1_leaky_velocity_neuron_id,
+        laser_total_period_neuron_id=laser_total_period_neuron_id,
+        speaker_total_period_neuron_id=speaker_total_period_neuron_id,
+        leds_total_period_neuron_id=leds_total_period_neuron_id,
+        laser_active_time_neuron_id=laser_active_time_neuron_id,
+        speaker_active_time_neuron_id=speaker_active_time_neuron_id,
+        front_led_active_time_neuron_id=front_led_active_time_neuron_id,
+        back_led_active_time_neuron_id=back_led_active_time_neuron_id,
+        speaker_tone_frequency_neuron_id=speaker_tone_frequency_neuron_id,
+        speaker_melody_neuron_id=speaker_melody_neuron_id,
+        laser_frequency_neuron_id=laser_frequency_neuron_id,
+        led_frequency_neuron_id=led_frequency_neuron_id,
+        database_ack_port_num=database_ack_port_num,
+        database_notify_host=database_notify_host,
+        database_notify_port_num=database_notify_port_num)
 
-    # Set up callbacks to occur at the start of simulation
-    live_spikes_connection.add_start_callback(
-        injector_pop.label, _push_bot_spikes_to_forward_to_spinnaker)
+    logger.warn("Due to using the Ethernet to stream the push bot data. We"
+                "recommend you use the SpiNNaker link interface instead.")
 
-    # Set up callbacks to occur when spikes are received
-    for receive_pop_label, callback in zip(receive_labels, sending_pops_callbacks):
-        live_spikes_connection.add_receive_callback(
-            receive_pop_label, callback)
-
-    connection = xxxxx
-
-
-
-
-def _push_bot_spikes_to_forward_to_bot(label, time, neuron_ids):
-    pass
-
-
+    pops = connection.populations
+    return pops[0], pops[1], connection
 
 

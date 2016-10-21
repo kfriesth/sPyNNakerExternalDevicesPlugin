@@ -103,6 +103,7 @@ static bool threshold_type_is_above_threshold(
 }
 
 void send_packet(multicast_packet packet){
+    log_info("ahhhh");
     while(!spin1_send_mc_packet(
                 packet.key, packet.payload, packet.payload_flag)){
         spin1_delay_us(1);

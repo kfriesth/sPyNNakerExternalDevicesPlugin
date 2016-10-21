@@ -5,15 +5,19 @@ from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
 
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 from spynnaker_external_devices_plugin.pyNN.protocols.\
     munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
 
 UART_ID = 0
 
+class PushBotSpiNNakerLinkMotorDevice(
+        ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
+    ProvidesKeyToAtomMappingImpl):
 
-class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
-                                      SendMeMulticastCommandsVertex):
+    n_motors = 0
 
     def __init__(
             self, spinnaker_link_id, motor_id=0, uart_id=0, label=None,
@@ -25,6 +29,8 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
 
         self._motor_id = motor_id
         self._uart_id = uart_id
+        self._this_motor_instance_id = PushBotSpiNNakerLinkMotorDevice.n_motors
+        PushBotSpiNNakerLinkMotorDevice.n_motors += 1
 
         ApplicationSpiNNakerLinkVertex.__init__(
             self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
@@ -34,6 +40,7 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
             self, start_resume_commands=self._get_start_resume_commands(),
             pause_stop_commands=self._get_pause_stop_commands(),
             timed_commands=self._get_timed_commands())
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
     def _get_start_resume_commands(self):
         commands = list()
@@ -42,15 +49,20 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
         if not self._protocol.has_set_off_configuration_command():
             commands.append(self._protocol.get_set_mode_command())
 
-        # device specific commands
-        commands.append(self._protocol.generic_motor_enable_disable(
-            enable_disable=1, uart_id=self._uart_id, time=0))
+        # only the first motor instance needs to send the enable command
+        if self._this_motor_instance_id == 0:
+            # device specific commands
+            commands.append(self._protocol.generic_motor_enable_disable(
+                enable_disable=1, uart_id=self._uart_id, time=0))
         return commands
 
     def _get_pause_stop_commands(self):
         commands = list()
-        commands.append(self._protocol.generic_motor_enable_disable(
-            enable_disable=1, uart_id=self._uart_id, time=-1))
+
+        # only the first motor instance needs to send the disable command
+        if self._this_motor_instance_id == 0:
+            commands.append(self._protocol.generic_motor_enable_disable(
+                enable_disable=0, uart_id=self._uart_id, time=-1))
         return commands
 
     @staticmethod
@@ -82,6 +94,16 @@ class PushBotSpiNNakerLinkMotorDevice(ApplicationSpiNNakerLinkVertex,
     @property
     def protocol_instance_key(self):
         return self._protocol.instance_key
+
+    @property
+    def enable_motor_key(self):
+        return self._protocol.generic_motor_enable_disable(
+            enable_disable=1, uart_id=self._uart_id, time=0).key
+
+    @property
+    def disable_motor_key(self):
+        return self._protocol.generic_motor_enable_disable(
+            enable_disable=0, uart_id=self._uart_id, time=-1).key
 
     @property
     def model_name(self):

@@ -15,6 +15,8 @@ from spinn_front_end_common.utility_models.commands.\
     multi_cast_command_with_payload import \
     MultiCastCommandWithPayload
 from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,8 @@ def get_spike_value_from_fpga_retina(key, mode):
 
 class ExternalFPGARetinaDevice(
         ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-        AbstractProvidesOutgoingPartitionConstraints):
+        AbstractProvidesOutgoingPartitionConstraints,
+        ProvidesKeyToAtomMappingImpl):
 
     MODE_128 = "128"
     MODE_64 = "64"
@@ -139,6 +142,7 @@ class ExternalFPGARetinaDevice(
                 MultiCastCommandWithPayload(-1, 0x0000FFFE, 0, 5, 100)],
             timed_commands=[])
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
     def get_outgoing_partition_constraints(self, partition):
         return [KeyAllocatorFixedKeyAndMaskConstraint(

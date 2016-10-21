@@ -1,103 +1,33 @@
 # pynn imports
-from enum import Enum
 
 from pacman.executor.injection_decorator import inject, supports_injection
-from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
-    import ApplicationSpiNNakerLinkVertex
-from spinn_front_end_common.abstract_models.impl.\
-    send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
-from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 from spynnaker.pyNN.utilities import constants
-from spynnaker_external_devices_plugin.pyNN.protocols.\
-    munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    push_bot.push_bot_retina_device import \
+    PushBotRetinaDevice
 
 
 @supports_injection
-class PushBotSpiNNakerLinkRetinaDevice(ApplicationSpiNNakerLinkVertex,
-                                       SendMeMulticastCommandsVertex):
-    PushBotRetinaResolution = Enum(
-        value="PushBotRetinaResolution",
-        names=[("Native128", 128 * 128),
-               ("Downsample64", 64 * 64),
-               ("Downsample32", 32 * 32),
-               ("Downsample16", 16 * 16)])
-
-    PushBotRetinaPolarity = Enum(
-        value="PushBotRetinaPolarity",
-        names=["Up", "Down", "Merged"])
-
-    UART_ID = 0
+class PushBotSpiNNakerLinkRetinaDevice(
+        PushBotRetinaDevice, ProvidesKeyToAtomMappingImpl):
 
     def __init__(
             self, spinnaker_link_id, label=None,
-            polarity=PushBotRetinaPolarity.Merged,
-            n_neurons=PushBotRetinaResolution.Native128,
+            polarity=PushBotRetinaDevice.PushBotRetinaPolarity.Merged,
+            n_neurons=
+            PushBotRetinaDevice.PushBotRetinaResolution.Native128.value,
             board_address=None):
 
-        # Validate number of timestamp bytes
-        if not isinstance(polarity, self.PushBotRetinaPolarity):
-            raise exceptions.SpynnakerException(
-                "Pushbot retina polarity should be one of those defined in"
-                " Polarity enumeration")
-
-        # if not using all spikes,
-        if polarity == self.PushBotRetinaPolarity.Merged:
-            n_neurons *= 2
-
-        # munich protocol
-        self._protocol = MunichIoSpiNNakerLinkProtocol(
-            mode=MunichIoSpiNNakerLinkProtocol.MODES.PUSH_BOT)
-
-        # holder for commands that need mods from pacman
-        self._commands_that_need_payload_updating_with_key = list()
-
-        ApplicationSpiNNakerLinkVertex.__init__(
-            self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
-            max_atoms_per_core=n_neurons, label=label,
-            board_address=board_address)
-        SendMeMulticastCommandsVertex.__init__(
-            self, start_resume_commands=self._get_start_resume_commands(),
-            pause_stop_commands=self._get_pause_stop_commands(),
-            timed_commands=self._get_timed_commands())
+        PushBotRetinaDevice.__init__(
+            self, spinnaker_link_id, label,
+            polarity, n_neurons, board_address)
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
         # stores for the injection aspects
         self._graph_mapper = None
         self._routing_infos = None
-
-    def _get_start_resume_commands(self):
-        # add to tracker for keys that need updating
-        new_key_command = self._protocol.set_retina_transmission_key(
-                new_key=None, uart_id=self.UART_ID)
-
-        self._commands_that_need_payload_updating_with_key.append(
-            new_key_command)
-
-        commands = list()
-
-        # add mode command if not done already
-        if not self._protocol.has_set_off_configuration_command():
-            commands.append(self._protocol.get_set_mode_command())
-
-        # device specific commands
-        commands.append(self._protocol.disable_retina_event_streaming(
-            uart_id=self.UART_ID))
-        commands.append(new_key_command)
-        commands.append(self._protocol.set_retina_transmission(
-            events_in_key=True, retina_pixels=self._n_atoms/2,
-            payload_holds_time_stamps=False,
-            size_of_time_stamp_in_bytes=None, uart_id=self.UART_ID, time=0))
-
-        return commands
-
-    def _get_pause_stop_commands(self):
-        commands = list()
-        commands.append(self._protocol.disable_retina_event_streaming(
-            uart_id=self.UART_ID))
-        return commands
-
-    @staticmethod
-    def _get_timed_commands():
-        return []
 
     @inject("MemoryGraphMapper")
     def graph_mapper(self, graph_mapper):
@@ -117,7 +47,3 @@ class PushBotSpiNNakerLinkRetinaDevice(ApplicationSpiNNakerLinkVertex,
             key = self._routing_infos.get_first_key_from_pre_vertex(
                 vert, constants.SPIKE_PARTITION_ID)
             command.payload = key
-
-    @property
-    def model_name(self):
-        return "push_bot_retina_device"

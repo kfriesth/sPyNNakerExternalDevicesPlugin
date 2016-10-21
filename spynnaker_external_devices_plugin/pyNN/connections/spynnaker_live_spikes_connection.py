@@ -15,7 +15,8 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
     """
 
     def __init__(self, receive_labels=None, send_labels=None, local_host=None,
-                 local_port=19999):
+                 local_port=19999,
+                 live_packet_gather_label="LiveSpikeReceiver"):
         """
 
         :param receive_labels: Labels of population from which live spikes\
@@ -35,7 +36,7 @@ class SpynnakerLiveSpikesConnection(LiveEventConnection):
         """
 
         LiveEventConnection.__init__(
-            self, "LiveSpikeReceiver", receive_labels, send_labels,
+            self, live_packet_gather_label, receive_labels, send_labels,
             local_host, local_port)
 
     def send_spike(self, label, neuron_id, send_full_keys=False):

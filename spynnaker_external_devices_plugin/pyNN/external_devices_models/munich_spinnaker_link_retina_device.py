@@ -14,9 +14,10 @@ from spinn_front_end_common.utility_models.\
     commands.multi_cast_command_with_payload import \
     MultiCastCommandWithPayload
 from spynnaker.pyNN import exceptions
+from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 # robot with 7 7 1
-
 
 def get_x_from_robot_retina(key):
     return (key >> 7) & 0x7f
@@ -32,7 +33,8 @@ def get_spike_value_from_robot_retina(key):
 
 class MunichRetinaDevice(
         ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-        AbstractProvidesOutgoingPartitionConstraints):
+        AbstractProvidesOutgoingPartitionConstraints,
+        ProvidesKeyToAtomMappingImpl):
 
     # key codes for the robot retina
     MANAGEMENT_BIT = 0x400
@@ -85,6 +87,7 @@ class MunichRetinaDevice(
             pause_stop_commands=self._pause_stop_commands(),
             timed_commands=self._get_timed_commands())
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
+        ProvidesKeyToAtomMappingImpl.__init__(self)
 
         if (self._position != self.RIGHT_RETINA and
            self._position != self.LEFT_RETINA):

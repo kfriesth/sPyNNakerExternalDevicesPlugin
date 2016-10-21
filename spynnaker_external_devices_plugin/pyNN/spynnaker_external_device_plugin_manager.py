@@ -91,6 +91,10 @@ class SpynnakerExternalDevicePluginManager(object):
         edge = ApplicationEdge(vertex, device_vertex)
         _spinnaker.add_application_edge(edge, partition_id)
 
+    def add_application_vertex(self, vertex):
+        _spinnaker = get_spynnaker()
+        _spinnaker.add_application_vertex(vertex)
+
     def machine_time_step(self):
         _spinnaker = get_spynnaker()
         return _spinnaker.machine_time_step
