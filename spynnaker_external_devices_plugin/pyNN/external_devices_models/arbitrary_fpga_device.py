@@ -1,12 +1,11 @@
 # pacman imports
-from pacman.model.graphs.application.impl.application_fpga_vertex \
-    import ApplicationFPGAVertex
-from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
-    ProvidesKeyToAtomMappingImpl
-
-# general imports
 from abc import ABCMeta
 from six import add_metaclass
+
+from pacman.model.graphs.application.impl.application_fpga_vertex \
+    import ApplicationFPGAVertex
+from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 
 
 @add_metaclass(ABCMeta)

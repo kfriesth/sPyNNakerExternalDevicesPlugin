@@ -3,11 +3,11 @@ from enum import Enum
 
 from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
     import ApplicationSpiNNakerLinkVertex
+from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl \
+    import ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl \
-    import ProvidesKeyToAtomMappingImpl
 from spynnaker_external_devices_plugin.pyNN.protocols.\
     munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
 

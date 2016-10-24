@@ -10,7 +10,7 @@ n_neurons = n_neurons_per_command * n_commands
 # Setup
 p.setup(timestep=1.0)
 
-timer_ticks_between_test = 1000
+timer_ticks_between_test = 100
 spike_times = list()
 
 # handle neurons

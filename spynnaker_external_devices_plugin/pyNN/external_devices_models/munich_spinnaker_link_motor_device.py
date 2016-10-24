@@ -24,14 +24,14 @@ from spinn_front_end_common.abstract_models\
     import AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.abstract_models.impl\
     .application_data_specable_vertex import ApplicationDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     vertex_with_dependent_vertices import \
     VertexWithEdgeToDependentVertices
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
-    ProvidesKeyToAtomMappingImpl
 
 logger = logging.getLogger(__name__)
 

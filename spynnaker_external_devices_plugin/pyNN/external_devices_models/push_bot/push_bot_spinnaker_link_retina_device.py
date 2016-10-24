@@ -1,7 +1,7 @@
 # pynn imports
 
 from pacman.executor.injection_decorator import inject, supports_injection
-from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
+from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
     ProvidesKeyToAtomMappingImpl
 from spynnaker.pyNN.utilities import constants
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\

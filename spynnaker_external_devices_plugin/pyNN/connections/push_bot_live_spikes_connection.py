@@ -185,6 +185,8 @@ class PushBotLiveSpikesConnection(object):
             self.receive_control_packets_from_spinnaker)
         self._spinnaker_connection.add_start_callback(
             self._control_module_pop.label, self.start_callback)
+        self._spinnaker_connection.add_pause_stop_callback(
+            self._control_module_pop.label, self.stop_signals)
 
         # handle packets coming from the push bot
         self._push_bot_connection = PushBotWIFIConnection(
@@ -210,15 +212,12 @@ class PushBotLiveSpikesConnection(object):
         :return: None
         """
         if self._finished_start_up:
-            print "message from atom {} with payload {}".format(atom, payload)
             ethernet_message = \
                 self._translate_spinnaker_link_to_ethernet_commands(
                     self._control_module_pop.
-                    _vertex.get_key_from_atom_mapping(atom),
+                        _vertex.get_key_from_atom_mapping(atom),
                     payload)
             if ethernet_message is not None:
-                logger.info(
-                    "sending push bot the command {}".format(ethernet_message))
                 self._push_bot_connection.send(ethernet_message)
             else:
                 logger.warning("The command from atom {} has no corresponding"
@@ -263,10 +262,8 @@ class PushBotLiveSpikesConnection(object):
         # flag that packets can be sent now
         self._finished_start_up = True
 
-    def close(self):
-        """ shuts down all the connections and sends the shut down commands to
-        the push bot bits.
-
+    def stop_signals(self):
+        """ sends the shut down commands to the push bot bits
         :return:
         """
         self._finished_start_up = False
@@ -275,6 +272,14 @@ class PushBotLiveSpikesConnection(object):
         commands.extend(
             self._control_module_pop._vertex.get_stop_pause_commands())
         self._send_commands(commands)
+
+    def close(self):
+        """ shuts down all the connections and sends the shut down commands to
+        the push bot bits.
+
+        :return:
+        """
+        self.stop_signals()
         self._spinnaker_connection.close()
         self._push_bot_connection.close()
         self._push_bot_connection_listener.close()

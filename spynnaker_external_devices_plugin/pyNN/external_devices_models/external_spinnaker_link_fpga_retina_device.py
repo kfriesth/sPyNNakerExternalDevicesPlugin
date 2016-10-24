@@ -9,14 +9,14 @@ from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+    ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
 from spinn_front_end_common.utility_models.commands.\
     multi_cast_command_with_payload import \
     MultiCastCommandWithPayload
 from spynnaker.pyNN import exceptions
-from spynnaker.pyNN.models.common.provides_key_to_atom_mapping_impl import \
-    ProvidesKeyToAtomMappingImpl
 
 logger = logging.getLogger(__name__)
 
