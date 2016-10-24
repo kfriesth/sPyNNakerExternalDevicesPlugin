@@ -1,8 +1,7 @@
 
 # pynn imports
-from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
-    import ApplicationSpiNNakerLinkVertex
-from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+from spinn_front_end_common.abstract_models.impl.\
+    provides_key_to_atom_mapping_impl import \
     ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
@@ -11,15 +10,13 @@ from spynnaker_external_devices_plugin.pyNN.protocols.\
 
 UART_ID = 0
 
-class PushBotSpiNNakerLinkMotorDevice(
-        ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-    ProvidesKeyToAtomMappingImpl):
+
+class PushBotMotorDevice(
+        SendMeMulticastCommandsVertex, ProvidesKeyToAtomMappingImpl):
 
     n_motors = 0
 
-    def __init__(
-            self, spinnaker_link_id, motor_id=0, uart_id=0, label=None,
-            n_neurons=1, board_address=None):
+    def __init__(self, motor_id=0, uart_id=0):
 
         # munich protocol
         self._protocol = MunichIoSpiNNakerLinkProtocol(
@@ -27,13 +24,9 @@ class PushBotSpiNNakerLinkMotorDevice(
 
         self._motor_id = motor_id
         self._uart_id = uart_id
-        self._this_motor_instance_id = PushBotSpiNNakerLinkMotorDevice.n_motors
-        PushBotSpiNNakerLinkMotorDevice.n_motors += 1
+        self._this_motor_instance_id = PushBotMotorDevice.n_motors
+        PushBotMotorDevice.n_motors += 1
 
-        ApplicationSpiNNakerLinkVertex.__init__(
-            self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
-            max_atoms_per_core=n_neurons, label=label,
-            board_address=board_address)
         SendMeMulticastCommandsVertex.__init__(
             self, start_resume_commands=self._get_start_resume_commands(),
             pause_stop_commands=self._get_pause_stop_commands(),

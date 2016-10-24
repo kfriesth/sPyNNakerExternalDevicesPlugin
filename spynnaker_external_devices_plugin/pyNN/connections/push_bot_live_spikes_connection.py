@@ -1,3 +1,10 @@
+import logging
+import numpy
+
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_ethernet.push_bot_ethernet_control_module_n_model import \
+    PushBotEthernetControlModuleNModel
+
 from pacman.model.constraints.placer_constraints.\
     placer_radial_placement_from_chip_constraint import \
     PlacerRadialPlacementFromChipConstraint
@@ -11,23 +18,18 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
 from spinnman.connections.connection_listener import ConnectionListener
 from spinnman.messages.eieio.eieio_type import EIEIOType
 from spynnaker.pyNN import Population
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    push_bot.push_bot_retina_device import \
-    PushBotRetinaDevice
-from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
-    import SpikeInjector
-from spynnaker_external_devices_plugin.pyNN.connections\
-    .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 from spynnaker_external_devices_plugin.pyNN.connections.\
     push_bot_wifi_connection import PushBotWIFIConnection
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot\
-    .push_bot_ethernet_control_module_n_model import \
-    PushBotEthernetControlModuleNModel
+from spynnaker_external_devices_plugin.pyNN.connections\
+    .spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_ethernet.push_bot_retina_device import \
+    PushBotRetinaDevice
 from spynnaker_external_devices_plugin.pyNN.protocols.\
     munich_io_ethernet_protocol import MunichIoEthernetProtocol
+from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
+    import SpikeInjector
 
-import numpy
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -232,7 +234,6 @@ class PushBotLiveSpikesConnection(object):
         :return: None
         """
         print "retina"
-        print message
         neuron_ids = self._handle_packet(message)
         for neuron_id in neuron_ids:
             self._spinnaker_connection.send_spike(
@@ -254,7 +255,7 @@ class PushBotLiveSpikesConnection(object):
         commands = list()
         commands.extend(self._retina_pop._start_resume_commands)
         commands.extend(
-            self._control_module_pop._vertex.get_start_resume_commands())
+            self._control_module_pop._vertex.get_start_resume_commands)
 
         # send the commands to the push bot
         self._send_commands(commands)
@@ -262,15 +263,15 @@ class PushBotLiveSpikesConnection(object):
         # flag that packets can be sent now
         self._finished_start_up = True
 
-    def stop_signals(self):
+    def stop_signals(self, _, spinnaker_connection):
         """ sends the shut down commands to the push bot bits
         :return:
         """
         self._finished_start_up = False
         commands = list()
-        commands.extend(self._retina_pop._get_pause_stop_commands)
+        commands.extend(self._retina_pop._get_pause_stop_commands())
         commands.extend(
-            self._control_module_pop._vertex.get_stop_pause_commands())
+            self._control_module_pop._vertex.get_stop_pause_commands)
         self._send_commands(commands)
 
     def close(self):
@@ -279,7 +280,7 @@ class PushBotLiveSpikesConnection(object):
 
         :return:
         """
-        self.stop_signals()
+        self.stop_signals(None, None)
         self._spinnaker_connection.close()
         self._push_bot_connection.close()
         self._push_bot_connection_listener.close()
@@ -325,7 +326,7 @@ class PushBotLiveSpikesConnection(object):
             {'port': spinnaker_injection_packet_port},
             "The_Push_bot_Retina_spike_injector")
         real_retina_pop = PushBotRetinaDevice(
-            spinnaker_link_id=None)
+            PushBotRetinaDevice.PushBotRetinaResolution.Native128.value * 2)
         return spike_injector_pop, real_retina_pop
 
     @staticmethod
@@ -611,10 +612,10 @@ class PushBotLiveSpikesConnection(object):
         return neuron_ids
 
     def _process_retina(self, data_all):
-        pass
+        print "data from nengo retina code is {}".format(data_all)
 
     def _process_ascii(self, cmd):
-        pass
+        print "data from nengo ascii is {}".format(cmd)
 
     @property
     def populations(self):

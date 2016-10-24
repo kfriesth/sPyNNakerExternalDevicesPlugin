@@ -1,51 +1,10 @@
-import math
-import numpy
-from collections import namedtuple
-
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import socket
-
-from enum import Enum
-
 import spynnaker.pyNN as p
 import spynnaker_external_devices_plugin.pyNN as q
-from spinn_front_end_common.utility_models.command_sender import CommandSender
 
-# Named tuple bundling together configuration elements of a push bot resolution
-# config
-PushBotRetinaResolutionConfig = namedtuple("PushBotRetinaResolution",
-                                           ["pixels", "enable_command",
-                                            "coordinate_bits"])
 n_neurons_per_command = 20
 n_neurons_per_synapse_type = 10
 n_commands = 4
 n_neurons = n_neurons_per_command * n_commands
-
-PushBotRetinaResolution = Enum(
-    value="PushBotRetinaResolution",
-    names=[("Native128",
-            PushBotRetinaResolutionConfig(128, (1 << 26), 7)),
-           ("Downsample64",
-            PushBotRetinaResolutionConfig(64, (2 << 26), 6)),
-           ("Downsample32",
-            PushBotRetinaResolutionConfig(32, (3 << 26), 5)),
-           ("Downsample16",
-            PushBotRetinaResolutionConfig(16, (4 << 26), 4))])
-
-# How regularity to display frames
-FRAME_TIME_MS = 33
-
-# Resolution to start retina with
-RESOLUTION = \
-    q.PushBotSpiNNakerLinkRetinaDevice.PushBotRetinaResolution.Downsample32
-vis_data = PushBotRetinaResolution.Downsample32
-
-# Time constant of pixel decay
-DECAY_TIME_CONSTANT_MS = 100
-
-# Value of brightest pixel to show
-DISPLAY_MAX = 33.0
 
 # Setup
 p.setup(timestep=1.0)
@@ -108,7 +67,7 @@ p.Projection(ssa, push_bot_control_module,
              p.FromListConnector(connection_list_excit), target="excitatory")
 
 # Run infinite simulation (non-blocking)
-p.run(20000)
+p.run(40000)
 
 # End simulation
 p.end()

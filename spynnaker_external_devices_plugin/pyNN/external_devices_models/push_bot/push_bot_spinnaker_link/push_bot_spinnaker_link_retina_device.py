@@ -1,17 +1,19 @@
 # pynn imports
 
 from pacman.executor.injection_decorator import inject, supports_injection
-from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
-    ProvidesKeyToAtomMappingImpl
+from pacman.model.graphs.application.impl.\
+    application_spinnaker_link_vertex import \
+    ApplicationSpiNNakerLinkVertex
+from spynnaker.pyNN import exceptions
 from spynnaker.pyNN.utilities import constants
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
-    push_bot.push_bot_retina_device import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_ethernet.push_bot_retina_device import \
     PushBotRetinaDevice
 
 
 @supports_injection
 class PushBotSpiNNakerLinkRetinaDevice(
-        PushBotRetinaDevice, ProvidesKeyToAtomMappingImpl):
+        PushBotRetinaDevice, ApplicationSpiNNakerLinkVertex):
 
     def __init__(
             self, spinnaker_link_id, label=None,
@@ -20,10 +22,20 @@ class PushBotSpiNNakerLinkRetinaDevice(
             PushBotRetinaDevice.PushBotRetinaResolution.Native128.value,
             board_address=None):
 
-        PushBotRetinaDevice.__init__(
-            self, spinnaker_link_id, label,
-            polarity, n_neurons, board_address)
-        ProvidesKeyToAtomMappingImpl.__init__(self)
+        # Validate number of timestamp bytes
+        if not isinstance(polarity, self.PushBotRetinaPolarity):
+            raise exceptions.SpynnakerException(
+                "Pushbot retina polarity should be one of those defined in"
+                " Polarity enumeration")
+
+        # if not using all spikes,
+        if polarity == self.PushBotRetinaPolarity.Merged:
+            n_neurons *= 2
+
+        PushBotRetinaDevice.__init__(self, n_neurons)
+        ApplicationSpiNNakerLinkVertex.__init__(
+            self, spinnaker_link_id=spinnaker_link_id, n_atoms=n_neurons,
+            board_address=board_address, label=label)
 
         # stores for the injection aspects
         self._graph_mapper = None

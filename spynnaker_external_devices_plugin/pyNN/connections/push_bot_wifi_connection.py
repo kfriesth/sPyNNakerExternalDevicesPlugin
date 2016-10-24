@@ -13,23 +13,13 @@ import select
 
 class PushBotWIFIConnection(AbstractConnection, AbstractListenable):
 
-    def __init__(self, local_host=None, local_port=56000, remote_host=None,
-                 remote_port=None):
+    def __init__(self, local_host=None, local_port=56000):
         """
         :param local_host: The local host name or ip address to bind to.\
                     If not specified defaults to bind to all interfaces,\
                     unless remote_host is specified, in which case binding is\
                     _done to the ip address that will be used to send packets
         :type local_host: str or None
-        :param remote_host: The remote host name or ip address to send packets\
-                    to.  If not specified, the socket will be available for\
-                    listening only, and will throw and exception if used for\
-                    sending
-        :type remote_host: str or None
-        :param remote_port: The remote port to send packets to.  If\
-                    remote_host is None, this is ignored.  If remote_host is\
-                    specified, this must also be specified for the connection\
-                    to allow sending
         :raise spinnman.exceptions.SpinnmanIOException: If there is an error\
                     setting up the communication channel
         """
@@ -66,8 +56,6 @@ class PushBotWIFIConnection(AbstractConnection, AbstractListenable):
         # Mark the socket as non-sending, unless the remote host is
         # specified - send requests will then cause an exception
         self._can_send = True
-        self._remote_ip_address = None
-        self._remote_port = None
 
         # Get the details of where the socket is connected
         self._local_ip_address = None

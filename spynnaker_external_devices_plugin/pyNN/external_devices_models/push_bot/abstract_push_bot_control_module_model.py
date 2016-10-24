@@ -1,3 +1,7 @@
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    threshold_type_push_bot_control_module import \
+    ThresholdTypePushBotControlModule
+
 from pacman.model.constraints.key_allocator_constraints.\
     key_allocator_fixed_key_and_mask_constraint import \
     KeyAllocatorFixedKeyAndMaskConstraint
@@ -7,36 +11,28 @@ from pacman.model.routing_info.base_key_and_mask import BaseKeyAndMask
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_partition_constraints import \
     AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utilities import exceptions
+
+from spynnaker.pyNN.models.neuron.abstract_population_vertex \
+    import AbstractPopulationVertex
+from spynnaker.pyNN.models.neuron.input_types.input_type_current \
+    import InputTypeCurrent
 from spynnaker.pyNN.models.neuron.neuron_models\
     .neuron_model_leaky_integrate_and_fire \
     import NeuronModelLeakyIntegrateAndFire
 from spynnaker.pyNN.models.neuron.synapse_types.synapse_type_exponential \
     import SynapseTypeExponential
-from spynnaker.pyNN.models.neuron.input_types.input_type_current \
-    import InputTypeCurrent
-from spynnaker.pyNN.models.neuron.abstract_population_vertex \
-    import AbstractPopulationVertex
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_laser_device import \
-    PushBotLaserDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_led_device import \
-    PushBotLEDDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.push_bot_speaker_device import \
-    PushBotSpeakerDevice
-from spynnaker_external_devices_plugin.pyNN .external_devices_models.push_bot.\
-    push_bot_spinnaker_link_motor_device import \
-    PushBotSpiNNakerLinkMotorDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    threshold_type_push_bot_control_module import \
-    ThresholdTypePushBotControlModule
-from spinn_front_end_common.utilities import exceptions
 
+from six import add_metaclass
+from abc import ABCMeta
 import logging
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
 
-class PushBotEthernetControlModuleNModel(
+@add_metaclass(ABCMeta)
+class AbstractPushBotControlModuleModel(
         AbstractPopulationVertex, AbstractProvidesOutgoingPartitionConstraints):
     """ Leaky integrate and fire neuron with an exponentially decaying \
         current input
@@ -75,9 +71,29 @@ class PushBotEthernetControlModuleNModel(
     SPEAKER_MELODY_PARTITION_ID = "Speaker_melody_partition_id"
 
     def __init__(
-            self, n_neurons, spikes_per_second=None,
+            self, n_neurons,
+            # the laser
+            laser_vertex,
+
+            # the speaker
+            speaker_vertex,
+
+            # the front led
+            front_led,
+
+            # back_led
+            back_led,
+
+            # motor 0
+            motor_0,
+
+            # motor 1
+            motor_1,
+
+            # standard neuron stuff
+            spikes_per_second=None, label=None,
             ring_buffer_sigma=None,
-            incoming_spike_buffer_size=None, constraints=None, label=None,
+            incoming_spike_buffer_size=None, constraints=None,
 
             # defualt params for the neuron model type
             tau_m=default_parameters['tau_m'], cm=default_parameters['cm'],
@@ -88,19 +104,7 @@ class PushBotEthernetControlModuleNModel(
             tau_refrac=default_parameters['tau_refrac'],
             i_offset=default_parameters['i_offset'], v_init=None,
             # global for all devices that this control module works with
-            board_address=None, uart_id=0,
-            # the laser bespoke setup params
-            laser_start_active_time=0, laser_start_total_period=0,
-            laser_start_frequency=0,
-            # the front led bespoke setup params
-            front_led_start_active_time=0,
-            front_led_total_period=0, front_led_start_frequency=0,
-            # the back led bespoke setup params
-            back_led_start_active_time=0,
-            back_led_total_period=0, back_led_start_frequency=0,
-            # the speaker bespoke setup params
-            speaker_start_active_time=0, speaker_start_total_period=0,
-            speaker_start_frequency=None, speaker_melody_value=None,
+            uart_id=0,
             # neuron_ids for devices
             motor_0_permanent_velocity_neuron_id=None,
             motor_0_leaky_velocity_neuron_id=None,
@@ -116,7 +120,7 @@ class PushBotEthernetControlModuleNModel(
             speaker_tone_frequency_neuron_id=None,
             speaker_melody_neuron_id=None,
             laser_frequency_neuron_id=None,
-            led_frequency_neuron_id = None
+            led_frequency_neuron_id=None
     ):
         label = "PushBotControlModule"
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
@@ -132,40 +136,17 @@ class PushBotEthernetControlModuleNModel(
                 "Only 1 neuron can be allocated to a command, or to a motor, "
                 "or to control the tone/melody of the speaker.")
 
-        self._laser_device = PushBotLaserDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            uart_id=uart_id, start_active_time=laser_start_active_time,
-            start_total_period=laser_start_total_period,
-            start_frequency=laser_start_frequency, label="the push bot laser")
+        self._laser_device = laser_vertex
 
-        self._led_device_front = PushBotLEDDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            uart_id=uart_id, start_active_time=front_led_start_active_time,
-            front_led=True, start_total_period=front_led_total_period,
-            start_frequency=front_led_start_frequency,
-            label="the push bot front led")
+        self._led_device_front = front_led
 
-        self._led_device_back = PushBotLEDDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            uart_id=uart_id, start_active_time=back_led_start_active_time,
-            front_led=False, start_total_period=back_led_total_period,
-            start_frequency=back_led_start_frequency,
-            label="The push bot back led")
+        self._led_device_back = back_led
 
-        self._motor_0 = PushBotSpiNNakerLinkMotorDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            uart_id=uart_id, motor_id=0, label="The push bot first motor")
+        self._motor_0 = motor_0
 
-        self._motor_1 = PushBotSpiNNakerLinkMotorDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            uart_id=uart_id, motor_id=1, label="The push bot second motor")
+        self._motor_1 = motor_1
 
-        self._speaker = PushBotSpeakerDevice(
-            spinnaker_link_id=None, board_address=board_address,
-            start_active_time=speaker_start_active_time,
-            start_total_period=speaker_start_total_period,
-            start_frequency=speaker_start_frequency,
-            melody_value=speaker_melody_value, label="The push bot speaker")
+        self._speaker = speaker_vertex
 
         # collect keys from the different components and their command
         #  partitions
@@ -260,7 +241,7 @@ class PushBotEthernetControlModuleNModel(
             binary="push_bot_spinnaker_link_control_module_n_model.aplx",
             label=label,
             max_atoms_per_core=
-            PushBotEthernetControlModuleNModel.
+            AbstractPushBotControlModuleModel.
             _model_based_max_atoms_per_core,
             spikes_per_second=spikes_per_second,
             ring_buffer_sigma=ring_buffer_sigma,
@@ -488,6 +469,7 @@ class PushBotEthernetControlModuleNModel(
         partitions.append(self.SPEAKER_MELODY_PARTITION_ID)
         return partitions
 
+    @property
     def get_start_resume_commands(self):
         commands = list()
         commands.extend(self._laser_device.start_resume_commands)
@@ -498,6 +480,7 @@ class PushBotEthernetControlModuleNModel(
         commands.extend(self._speaker.start_resume_commands)
         return commands
 
+    @property
     def get_stop_pause_commands(self):
         commands = list()
         commands.extend(self._laser_device.pause_stop_commands)
@@ -510,7 +493,7 @@ class PushBotEthernetControlModuleNModel(
 
     @staticmethod
     def set_model_max_atoms_per_core(new_value):
-        PushBotEthernetControlModuleNModel.\
+        AbstractPushBotControlModuleModel.\
             _model_based_max_atoms_per_core = new_value
 
     @property
@@ -579,7 +562,7 @@ class PushBotEthernetControlModuleNModel(
 
     @staticmethod
     def get_max_atoms_per_core():
-        return PushBotEthernetControlModuleNModel.\
+        return AbstractPushBotControlModuleModel.\
             _model_based_max_atoms_per_core
 
     def routing_key_partition_atom_mapping(self, routing_info, partition):

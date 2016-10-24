@@ -10,7 +10,7 @@ n_neurons = n_neurons_per_command * n_commands
 # Setup
 p.setup(timestep=1.0)
 
-timer_ticks_between_test = 100
+timer_ticks_between_test = 1000
 spike_times = list()
 
 # handle neurons
@@ -67,7 +67,7 @@ p.Projection(ssa, push_bot_control_module,
              p.FromListConnector(connection_list_excit), target="excitatory")
 
 # Run infinite simulation (non-blocking)
-p.run(20000)
+p.run(40000)
 
 # End simulation
 p.end()

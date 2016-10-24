@@ -4,6 +4,7 @@ and implementation for the PyNN High-level API
 (http://neuralensemble.org/trac/PyNN)
 """
 
+import logging
 import os
 
 from spinn_front_end_common.utilities.notification_protocol.socket_address \
@@ -28,33 +29,30 @@ from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_motor_device import MunichMotorDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
     munich_spinnaker_link_retina_device import MunichRetinaDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_ethernet_control_module_n_model import \
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    push_bot.push_bot_ethernet.push_bot_ethernet_control_module_n_model import \
     PushBotEthernetControlModuleNModel
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_spinnaker_link_motor_device import PushBotSpiNNakerLinkMotorDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_spinnaker_link_retina_device import \
-    PushBotSpiNNakerLinkRetinaDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_spinnaker_link_control_module_n_model import \
-    PushBotSpinnakerLinkControlModuleNModel
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
+    push_bot_spinnaker_link.push_bot_spinnaker_link_control_module_n_model \
+    import PushBotSpinnakerLinkControlModuleNModel
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    push_bot.push_bot_spinnaker_link.\
     push_bot_spinnaker_link_accelerometer_device import \
     PushBotSpiNNakerLinkAccelerometerDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    push_bot.push_bot_spinnaker_link.push_bot_spinnaker_link_gyro_device \
+    import PushBotSpiNNakerLinkGyroDevice
+from spynnaker_external_devices_plugin.pyNN.external_devices_models.\
+    push_bot.push_bot_spinnaker_link.push_bot_spinnaker_link_compass_device \
+    import PushBotSpiNNakerLinkCompassDevice
 from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_spinnaker_link_compass_device import \
-    PushBotSpiNNakerLinkCompassDevice
-from spynnaker_external_devices_plugin.pyNN.external_devices_models.push_bot.\
-    push_bot_spinnaker_link_gyro_device import PushBotSpiNNakerLinkGyroDevice
-
+    push_bot_spinnaker_link.push_bot_spinnaker_link_retina_device \
+    import PushBotSpiNNakerLinkRetinaDevice
 from spynnaker_external_devices_plugin.pyNN.\
     spynnaker_external_device_plugin_manager import \
     SpynnakerExternalDevicePluginManager
 from spynnaker_external_devices_plugin.pyNN.utility_models.spike_injector \
     import SpikeInjector as SpynnakerExternalDeviceSpikeInjector
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -219,8 +217,8 @@ def push_bot_ethernet_connection(
         spinnaker_control_packet_port, spinnaker_injection_packet_port,
         push_bot_ip_address, control_n_neurons, ip_address=None,
         spikes_per_second=None, ring_buffer_sigma=None,
-        incoming_spike_buffer_size=None, constraints=None, label=None,
-        # defualt params for the neuron model type
+        incoming_spike_buffer_size=None,
+        # default params for the neuron model type
         tau_m=PushBotEthernetControlModuleNModel.default_parameters['tau_m'],
         cm=PushBotEthernetControlModuleNModel.default_parameters['cm'],
         v_rest=PushBotEthernetControlModuleNModel.default_parameters['v_rest'],
@@ -279,8 +277,6 @@ def push_bot_ethernet_connection(
     :param spikes_per_second:
     :param ring_buffer_sigma:
     :param incoming_spike_buffer_size:
-    :param constraints:
-    :param label:
     :param tau_m:
     :param cm:
     :param v_rest:

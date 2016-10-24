@@ -1,20 +1,17 @@
 # pynn imports
 from enum import Enum
 
-from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
-    import ApplicationSpiNNakerLinkVertex
-from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl \
+from spinn_front_end_common.abstract_models.impl.\
+    provides_key_to_atom_mapping_impl \
     import ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
-from spynnaker.pyNN import exceptions
 from spynnaker_external_devices_plugin.pyNN.protocols.\
     munich_io_spinnaker_link_protocol import MunichIoSpiNNakerLinkProtocol
 
 
 class PushBotRetinaDevice(
-        ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-        ProvidesKeyToAtomMappingImpl):
+        SendMeMulticastCommandsVertex, ProvidesKeyToAtomMappingImpl):
     PushBotRetinaResolution = Enum(
         value="PushBotRetinaResolution",
         names=[("Native128", 128 * 128),
@@ -28,21 +25,7 @@ class PushBotRetinaDevice(
 
     UART_ID = 0
 
-    def __init__(
-            self, spinnaker_link_id, label=None,
-            polarity=PushBotRetinaPolarity.Merged,
-            n_neurons=PushBotRetinaResolution.Native128.value,
-            board_address=None):
-
-        # Validate number of timestamp bytes
-        if not isinstance(polarity, self.PushBotRetinaPolarity):
-            raise exceptions.SpynnakerException(
-                "Pushbot retina polarity should be one of those defined in"
-                " Polarity enumeration")
-
-        # if not using all spikes,
-        if polarity == self.PushBotRetinaPolarity.Merged:
-            n_neurons *= 2
+    def __init__(self, n_atoms):
 
         # munich protocol
         self._protocol = MunichIoSpiNNakerLinkProtocol(
@@ -51,10 +34,8 @@ class PushBotRetinaDevice(
         # holder for commands that need mods from pacman
         self._commands_that_need_payload_updating_with_key = list()
 
-        ApplicationSpiNNakerLinkVertex.__init__(
-            self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
-            max_atoms_per_core=n_neurons, label=label,
-            board_address=board_address)
+        self._n_atoms=n_atoms
+
         SendMeMulticastCommandsVertex.__init__(
             self, start_resume_commands=self._get_start_resume_commands(),
             pause_stop_commands=self._get_pause_stop_commands(),

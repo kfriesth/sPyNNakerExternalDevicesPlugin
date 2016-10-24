@@ -1,9 +1,8 @@
 
 
 # pynn imports
-from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
-    import ApplicationSpiNNakerLinkVertex
-from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+from spinn_front_end_common.abstract_models.impl.\
+    provides_key_to_atom_mapping_impl import \
     ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     send_me_multicast_commands_vertex import SendMeMulticastCommandsVertex
@@ -14,15 +13,13 @@ UART_ID = 0
 
 
 class PushBotLEDDevice(
-        ApplicationSpiNNakerLinkVertex, SendMeMulticastCommandsVertex,
-        ProvidesKeyToAtomMappingImpl):
+        SendMeMulticastCommandsVertex, ProvidesKeyToAtomMappingImpl):
 
     _N_LEDS = 0
 
     def __init__(
-            self, spinnaker_link_id, uart_id=0, start_active_time=0,
+            self, uart_id=0, start_active_time=0,
             start_total_period=0, start_frequency=0, front_led=True,
-            label=None, n_neurons=1, board_address=None,
             command_sender_protocol=None):
 
         # munich protocols
@@ -40,10 +37,6 @@ class PushBotLEDDevice(
         self._start_frequency = start_frequency
         self._is_front_led = front_led
 
-        ApplicationSpiNNakerLinkVertex.__init__(
-            self, n_atoms=n_neurons, spinnaker_link_id=spinnaker_link_id,
-            max_atoms_per_core=n_neurons, label=label,
-            board_address=board_address)
         SendMeMulticastCommandsVertex.__init__(
             self, start_resume_commands=self._get_start_resume_commands(),
             pause_stop_commands=self._get_pause_stop_commands(),
