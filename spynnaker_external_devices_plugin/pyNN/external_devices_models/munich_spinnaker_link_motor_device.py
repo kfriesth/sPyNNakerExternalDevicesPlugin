@@ -24,7 +24,8 @@ from spinn_front_end_common.abstract_models\
     import AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.abstract_models.impl\
     .application_data_specable_vertex import ApplicationDataSpecableVertex
-from spinn_front_end_common.abstract_models.impl.provides_key_to_atom_mapping_impl import \
+from spinn_front_end_common.abstract_models.impl.\
+    provides_key_to_atom_mapping_impl import \
     ProvidesKeyToAtomMappingImpl
 from spinn_front_end_common.abstract_models.impl.\
     vertex_with_dependent_vertices import \
@@ -75,7 +76,7 @@ class MunichMotorDevice(
 
         ApplicationVertex.__init__(self, label)
         VertexWithEdgeToDependentVertices.__init__(
-            self, {_MunichMotorDevice(spinnaker_link_id): MOTOR_PARTITION_ID})
+            self, {_MunichMotorDevice(spinnaker_link_id): [MOTOR_PARTITION_ID]})
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
         ProvidesKeyToAtomMappingImpl.__init__(self)
 
