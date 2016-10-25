@@ -29,7 +29,7 @@ PushBotRetinaResolution = Enum(
             PushBotRetinaResolutionConfig(16, (4 << 26), 4))])
 
 # How regularity to display frames
-FRAME_TIME_MS = 33
+FRAME_TIME_MS = 10
 
 # Resolution to start retina with
 RESOLUTION = q.PushBotSpiNNakerLinkRetinaDevice.\
@@ -46,14 +46,17 @@ DISPLAY_MAX = 33.0
 p.setup(timestep=1.0)
 
 # Pushbot Retina - Down Polarity
-retina_pop = p.Population(RESOLUTION.value, q.PushBotSpiNNakerLinkRetinaDevice, {
-    "spinnaker_link_id": 0,
-    "polarity": q.PushBotSpiNNakerLinkRetinaDevice.PushBotRetinaPolarity.Merged})
+retina_pop, push_bot_control_module, push_bot_connection = \
+    q.push_bot_ethernet_connection(
+        spinnaker_control_packet_port=11111,
+        spinnaker_injection_packet_port=22222,
+        speaker_start_frequency=0,
+        control_n_neurons=0,
+        push_bot_ip_address="10.162.177.57")
 
 
 # Activate live retina output
 q.activate_live_output_for(retina_pop, host="0.0.0.0", port=17893)
-
 
 # Take a flat numpy array of image data and convert it into a square
 def get_square_image_data_view(image_data):
@@ -102,6 +105,8 @@ def updatefig(frame):
             # Mask out x, y coordinates
             payload &= coordinate_mask
 
+            print payload
+
             # Increment these pixels
             image_data[payload] += 1.0
 
@@ -122,5 +127,7 @@ p.run(None)
 # Show animated plot (blocking)
 plt.show()
 
+# end connection
+push_bot_connection.close()
 # End simulation
 p.end()

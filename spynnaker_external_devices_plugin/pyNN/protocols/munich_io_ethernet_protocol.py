@@ -7,8 +7,7 @@ class MunichIoEthernetProtocol(object):
 
     @staticmethod
     def enable_retina():
-        return None
-        #return "E+\n"
+        return "E+\n"
 
     @staticmethod
     def disable_retina():

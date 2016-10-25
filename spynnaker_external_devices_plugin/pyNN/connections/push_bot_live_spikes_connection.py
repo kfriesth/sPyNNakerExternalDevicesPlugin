@@ -124,71 +124,95 @@ class PushBotLiveSpikesConnection(object):
 
         self._finished_start_up = False
 
-        # set up the database socket address so that the stuff ties into
-        # the notification interface
-        database_socket = SocketAddress(
-            listen_port=database_ack_port_num,
-            notify_host_name=database_notify_host,
-            notify_port_no=database_notify_port_num)
-
-        # update socket interface with new demands.
-        spynnaker_external_devices.add_socket_address(database_socket)
-
         # build the two spinnaker pops
         self._retina_injector_pop, self._retina_pop = \
             self._build_retina_injector(spinnaker_injection_packet_port)
 
-        self._control_module_pop = self._build_control_module_pop(
-            control_n_neurons, spikes_per_second, ring_buffer_sigma,
-            incoming_spike_buffer_size, control_constraints, tau_m,
-            cm, v_rest, v_reset, tau_syn_E, tau_syn_I, tau_refrac, i_offset,
-            v_init, board_address, uart_id, laser_start_active_time,
-            laser_start_total_period, laser_start_frequency,
-            front_led_start_active_time, front_led_total_period,
-            front_led_start_frequency, back_led_start_active_time,
-            back_led_total_period, back_led_start_frequency,
-            speaker_start_active_time, speaker_start_total_period,
-            speaker_start_frequency, speaker_melody_value,
-            motor_0_permanent_velocity_neuron_id,
-            motor_0_leaky_velocity_neuron_id,
-            motor_1_permanent_velocity_neuron_id,
-            motor_1_leaky_velocity_neuron_id, laser_total_period_neuron_id,
-            speaker_total_period_neuron_id, leds_total_period_neuron_id,
-            laser_active_time_neuron_id, speaker_active_time_neuron_id,
-            front_led_active_time_neuron_id, back_led_active_time_neuron_id,
-            speaker_tone_frequency_neuron_id, speaker_melody_neuron_id,
-            laser_frequency_neuron_id, led_frequency_neuron_id)
-        self._control_module_pop._vertex.add_constraint(
-            PlacerRadialPlacementFromChipConstraint(0,0))
+        self._control_module_pop = None
+        live_packet_gather = None
+        if control_n_neurons != 0:
+            # set up the database socket address so that the stuff ties into
+            # the notification interface
+            database_socket = SocketAddress(
+                listen_port=database_ack_port_num,
+                notify_host_name=database_notify_host,
+                notify_port_no=database_notify_port_num)
 
-        # build the gatherer
-        live_packet_gather = LivePacketGather(
-            ip_address, spinnaker_control_packet_port,
-            message_type=EIEIOType.KEY_PAYLOAD_32_BIT,
-            payload_as_time_stamps=False, use_payload_prefix=False)
-        live_packet_gather.add_constraint(
-            PlacerRadialPlacementFromChipConstraint(0,0))
-        spynnaker_external_devices.add_application_vertex(live_packet_gather)
+            # update socket interface with new demands.
+            spynnaker_external_devices.add_socket_address(database_socket)
 
-        # wire the outputs from the control module to the LPG
-        for partition_id in \
-                self._control_module_pop._vertex.all_partition_ids():
-            spynnaker_external_devices.add_edge(
-                self._control_module_pop._vertex, live_packet_gather,
-                partition_id)
 
-        # build the connection that handles packets to and from spinnaker
-        self._spinnaker_connection = SpynnakerLiveSpikesConnection(
-            receive_labels=[self._control_module_pop.label],
-            send_labels=[self._retina_injector_pop.label],
-            live_packet_gather_label=live_packet_gather.label)
-        self._spinnaker_connection.add_receive_callback(
-            self._control_module_pop.label,
-            self.receive_control_packets_from_spinnaker)
-        self._spinnaker_connection.add_start_callback(
-            self._control_module_pop.label, self.start_callback)
-        self._spinnaker_connection.add_pause_stop_callback(
-            self._control_module_pop.label, self.stop_signals)
+            self._control_module_pop = self._build_control_module_pop(
+                control_n_neurons, spikes_per_second, ring_buffer_sigma,
+                incoming_spike_buffer_size, control_constraints, tau_m,
+                cm, v_rest, v_reset, tau_syn_E, tau_syn_I, tau_refrac, i_offset,
+                v_init, board_address, uart_id, laser_start_active_time,
+                laser_start_total_period, laser_start_frequency,
+                front_led_start_active_time, front_led_total_period,
+                front_led_start_frequency, back_led_start_active_time,
+                back_led_total_period, back_led_start_frequency,
+                speaker_start_active_time, speaker_start_total_period,
+                speaker_start_frequency, speaker_melody_value,
+                motor_0_permanent_velocity_neuron_id,
+                motor_0_leaky_velocity_neuron_id,
+                motor_1_permanent_velocity_neuron_id,
+                motor_1_leaky_velocity_neuron_id, laser_total_period_neuron_id,
+                speaker_total_period_neuron_id, leds_total_period_neuron_id,
+                laser_active_time_neuron_id, speaker_active_time_neuron_id,
+                front_led_active_time_neuron_id, back_led_active_time_neuron_id,
+                speaker_tone_frequency_neuron_id, speaker_melody_neuron_id,
+                laser_frequency_neuron_id, led_frequency_neuron_id)
+
+            self._control_module_pop._vertex.add_constraint(
+                PlacerRadialPlacementFromChipConstraint(0,0))
+
+            # build the gatherer
+            live_packet_gather = LivePacketGather(
+                ip_address, spinnaker_control_packet_port,
+                message_type=EIEIOType.KEY_PAYLOAD_32_BIT,
+                payload_as_time_stamps=False, use_payload_prefix=False)
+            live_packet_gather.add_constraint(
+                PlacerRadialPlacementFromChipConstraint(0,0))
+            spynnaker_external_devices.add_application_vertex(
+                live_packet_gather)
+
+            # wire the outputs from the control module to the LPG
+            for partition_id in \
+                    self._control_module_pop._vertex.all_partition_ids():
+                spynnaker_external_devices.add_edge(
+                    self._control_module_pop._vertex, live_packet_gather,
+                    partition_id)
+
+            # build the connection that handles packets to and from spinnaker
+            self._spinnaker_connection = SpynnakerLiveSpikesConnection(
+                receive_labels=[self._control_module_pop.label],
+                send_labels=[self._retina_injector_pop.label],
+                live_packet_gather_label=live_packet_gather.label)
+
+            self._spinnaker_connection.add_receive_callback(
+                self._control_module_pop.label,
+                self.receive_control_packets_from_spinnaker)
+            self._spinnaker_connection.add_start_callback(
+                self._control_module_pop.label, self.start_callback)
+            self._spinnaker_connection.add_pause_stop_callback(
+                self._control_module_pop.label, self.stop_signals)
+        else:
+            # set up the database socket address so that the stuff ties into
+            # the notification interface
+            database_socket = SocketAddress(
+                listen_port=database_ack_port_num,
+                notify_host_name=database_notify_host,
+                notify_port_no=database_notify_port_num)
+            # update socket interface with new demands.
+            spynnaker_external_devices.add_socket_address(database_socket)
+            # build the connection that handles packets to and from spinnaker
+            self._spinnaker_connection = SpynnakerLiveSpikesConnection(
+                receive_labels=[],
+                send_labels=[self._retina_injector_pop.label])
+            self._spinnaker_connection.add_start_callback(
+                self._retina_injector_pop.label, self.start_callback)
+            self._spinnaker_connection.add_pause_stop_callback(
+                self._retina_injector_pop.label, self.stop_signals)
 
         # handle packets coming from the push bot
         self._push_bot_connection = PushBotWIFIConnection(
@@ -225,20 +249,6 @@ class PushBotLiveSpikesConnection(object):
                 logger.warning("The command from atom {} has no corresponding"
                                " ethernet command".format(atom))
 
-    def receive_packets_from_push_bot_retina(self, message):
-        """ receives retina packets from the push bot and converts them into
-        neuron spikes within the spike injector system.
-
-        :param message: the data packet from the push bot that contains the
-        retina spikes.
-        :return: None
-        """
-        print "retina"
-        neuron_ids = self._handle_packet(message)
-        for neuron_id in neuron_ids:
-            self._spinnaker_connection.send_spike(
-                self._retina_injector_pop.label, neuron_id)
-
     def start_callback(self, _, spinnaker_connection):
         """ collects the commands needed for starting the simulation and then
         does a translation between spinnaker link and ethernet commands and
@@ -254,8 +264,12 @@ class PushBotLiveSpikesConnection(object):
         # collect commands from the push bot components
         commands = list()
         commands.extend(self._retina_pop._start_resume_commands)
-        commands.extend(
-            self._control_module_pop._vertex.get_start_resume_commands)
+
+        # if no control module is being used, don't get stop commands from it
+        # aka when only retina is being used
+        if self._control_module_pop is not None:
+            commands.extend(
+                self._control_module_pop._vertex.get_start_resume_commands)
 
         # send the commands to the push bot
         self._send_commands(commands)
@@ -267,11 +281,18 @@ class PushBotLiveSpikesConnection(object):
         """ sends the shut down commands to the push bot bits
         :return:
         """
+        logger.info("Sending stop commands to the push bot components")
         self._finished_start_up = False
         commands = list()
         commands.extend(self._retina_pop._get_pause_stop_commands())
-        commands.extend(
-            self._control_module_pop._vertex.get_stop_pause_commands)
+
+        # if no control module is being used, don't get stop commands from it
+        # aka when only retina is being used
+        if self._control_module_pop is not None:
+            commands.extend(
+                self._control_module_pop._vertex.get_stop_pause_commands)
+
+        # send commands to push bot
         self._send_commands(commands)
 
     def close(self):
@@ -301,9 +322,12 @@ class PushBotLiveSpikesConnection(object):
                 ethernet_message = \
                     self._translate_spinnaker_link_to_ethernet_commands(
                         command.key, command.payload)
+
             # if there is a mapping between spinnaker link and ethernet command
             # send packet, otherwise give a warning
             if ethernet_message is not None:
+                logger.info(
+                    "sending ethernet command {}".format(ethernet_message))
                 self._push_bot_connection.send(ethernet_message)
             else:
                 logger.warn("The command {} has no mapping for the ethernet "
@@ -472,95 +496,107 @@ class PushBotLiveSpikesConnection(object):
         elif command_key == self._retina_pop.set_retina_command_key:
             return self._ethernet_protocol.enable_retina()
 
-        # motor 0 leaky command
-        elif (command_key ==
-                  self._control_module_pop._vertex.motor_0_leaky_command_key):
-            return self._ethernet_protocol.motor_0_leaky_velocity(
-                command_payload)
+        if self._control_module_pop is not None:
+            # motor 0 leaky command
+            if (command_key ==
+                    self._control_module_pop._vertex.
+                    motor_0_leaky_command_key):
+                return self._ethernet_protocol.motor_0_leaky_velocity(
+                    command_payload)
 
-        # motor 0 perm command
-        elif (command_key ==
-                  self._control_module_pop._vertex.motor_0_perm_command_key):
-            return self._ethernet_protocol.motor_0_permanent_velocity(
-                command_payload)
+            # motor 0 perm command
+            elif (command_key ==
+                    self._control_module_pop._vertex.motor_0_perm_command_key):
+                return self._ethernet_protocol.motor_0_permanent_velocity(
+                    command_payload)
 
-        # motor 1 leaky command
-        elif (command_key ==
-                  self._control_module_pop._vertex.motor_1_leaky_command_key):
-            return self._ethernet_protocol.motor_1_leaky_velocity(
-                command_payload)
+            # motor 1 leaky command
+            elif (command_key ==
+                    self._control_module_pop._vertex.
+                    motor_1_leaky_command_key):
+                return self._ethernet_protocol.motor_1_leaky_velocity(
+                    command_payload)
 
-        # motor 1 perm command
-        elif (command_key ==
-                  self._control_module_pop._vertex.motor_1_perm_command_key):
-            return self._ethernet_protocol.motor_1_permanent_velocity(
-                command_payload)
+            # motor 1 perm command
+            elif (command_key ==
+                    self._control_module_pop._vertex.motor_1_perm_command_key):
+                return self._ethernet_protocol.motor_1_permanent_velocity(
+                    command_payload)
 
-        # laser total period command
-        elif (command_key == self._control_module_pop._vertex.
-                laser_config_total_period_command_key):
-            return self._ethernet_protocol.laser_total_period(command_payload)
+            # laser total period command
+            elif (command_key == self._control_module_pop._vertex.
+                    laser_config_total_period_command_key):
+                return self._ethernet_protocol.laser_total_period(
+                    command_payload)
 
-        # laser active time
-        elif (command_key == self._control_module_pop._vertex.
-                laser_config_active_time_command_key):
-            return self._ethernet_protocol.laser_active_time(command_payload)
+            # laser active time
+            elif (command_key == self._control_module_pop._vertex.
+                    laser_config_active_time_command_key):
+                return self._ethernet_protocol.laser_active_time(
+                    command_payload)
 
-        # laser frequency
-        elif (command_key == self._control_module_pop._vertex.
-                laser_config_frequency_command_key):
-            return self._ethernet_protocol.laser_frequency(command_payload)
+            # laser frequency
+            elif (command_key == self._control_module_pop._vertex.
+                    laser_config_frequency_command_key):
+                return self._ethernet_protocol.laser_frequency(command_payload)
 
-        # led total period command
-        elif (command_key == self._control_module_pop._vertex.
-                led_config_total_period_command_key):
-            return self._ethernet_protocol.led_total_period(command_payload)
+            # led total period command
+            elif (command_key == self._control_module_pop._vertex.
+                    led_config_total_period_command_key):
+                return self._ethernet_protocol.led_total_period(
+                    command_payload)
 
-        # led active time
-        elif (command_key == self._control_module_pop._vertex.
-              led_config_active_time_command_key):
-            return self._ethernet_protocol.led_active_time(command_payload)
+            # led active time
+            elif (command_key == self._control_module_pop._vertex.
+                  led_config_active_time_command_key):
+                return self._ethernet_protocol.led_active_time(command_payload)
 
-        # led frequency
-        elif (command_key == self._control_module_pop._vertex.
-                led_config_frequency_command_key):
-            return self._ethernet_protocol.led_frequency(command_payload)
+            # led frequency
+            elif (command_key == self._control_module_pop._vertex.
+                    led_config_frequency_command_key):
+                return self._ethernet_protocol.led_frequency(command_payload)
 
-        # speaker total period
-        elif (command_key == self._control_module_pop._vertex.
-                speaker_config_total_period_command_key):
-            return self._ethernet_protocol.speaker_total_period(command_payload)
+            # speaker total period
+            elif (command_key == self._control_module_pop._vertex.
+                    speaker_config_total_period_command_key):
+                return self._ethernet_protocol.speaker_total_period(
+                    command_payload)
 
-        # speaker active time
-        elif (command_key == self._control_module_pop._vertex.
-                speaker_config_active_time_command_key):
-            return self._ethernet_protocol.speaker_active_time(command_payload)
+            # speaker active time
+            elif (command_key == self._control_module_pop._vertex.
+                    speaker_config_active_time_command_key):
+                return self._ethernet_protocol.speaker_active_time(
+                    command_payload)
 
-        # speaker frequency
-        elif (command_key == self._control_module_pop._vertex.
-                speaker_set_tone_command_key):
-            return self._ethernet_protocol.speaker_frequency(command_payload)
+            # speaker frequency
+            elif (command_key == self._control_module_pop._vertex.
+                    speaker_set_tone_command_key):
+                return self._ethernet_protocol.speaker_frequency(
+                    command_payload)
 
-        # motor enable
-        elif (command_key == self._control_module_pop._vertex.
-                enable_motor_key):
-            return self._ethernet_protocol.enable_motor()
+            # motor enable
+            elif (command_key == self._control_module_pop._vertex.
+                    enable_motor_key):
+                return self._ethernet_protocol.enable_motor()
 
-        # motor disable
-        elif (command_key == self._control_module_pop._vertex.
-                disable_motor_key):
-            return self._ethernet_protocol.disable_motor()
-        else:
-            return None
+            # motor disable
+            elif (command_key == self._control_module_pop._vertex.
+                    disable_motor_key):
+                return self._ethernet_protocol.disable_motor()
+            else:
+                return None
+        return None
 
-    def _handle_packet(self, data):
+    def receive_packets_from_push_bot_retina(self, data):
         """
-        some code swiped from nengo for processing the packets coming
-        from the retina. Looks bloody ugly.[
+        receives retina packets from the push bot and converts them into
+        neuron spikes within the spike injector system.
+
+        most of this code swiped from nengo for processing the packets coming
+        from the retina. Looks full of numpy, but seems to do the job.
         :param data:
         :return:
         """
-
         neuron_ids = list()
 
         # combine it with any leftover data from last time through the loop
@@ -605,17 +641,20 @@ class PushBotLiveSpikesConnection(object):
                 # now process those retina events
                 neuron_ids.append(self._process_retina(data_all))
 
-        # and process the ascii events too
-        while '\n' in self._buffered_ascii:
-            cmd, buffered_ascii = self._buffered_ascii.split('\n', 1)
-            neuron_ids.append(self._process_ascii(cmd))
-        return neuron_ids
-
     def _process_retina(self, data_all):
-        print "data from nengo retina code is {}".format(data_all)
-
-    def _process_ascii(self, cmd):
-        print "data from nengo ascii is {}".format(cmd)
+        ys = data_all[::6] & 0x7f
+        xs = data_all[1::6] & 0x7f
+        polarity = numpy.where(data_all[1::6] >= 0x80, 1, -1)
+        for x, y, local_polarity in zip(xs, ys, polarity):
+            neuron_id = x + (y * 128)
+            if local_polarity == -1:
+                neuron_id += 128 * 128
+            if neuron_id > 128 * 128 * 2:
+                logger.error("Neuron id too big")
+            if neuron_id < 0:
+                logger.error("Neuron id too small")
+            self._spinnaker_connection.send_spike(
+                self._retina_injector_pop.label, neuron_id)
 
     @property
     def populations(self):
