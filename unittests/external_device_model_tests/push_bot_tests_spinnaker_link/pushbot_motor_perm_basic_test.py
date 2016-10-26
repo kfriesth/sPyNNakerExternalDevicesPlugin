@@ -10,7 +10,6 @@ from enum import Enum
 
 import spynnaker.pyNN as p
 import spynnaker_external_devices_plugin.pyNN as q
-from spinn_front_end_common.utility_models.command_sender import CommandSender
 
 # Named tuple bundling together configuration elements of a push bot resolution
 # config
