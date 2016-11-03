@@ -3,9 +3,8 @@ from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
 
 
 class ExternalDevicesMachineVertex(MachineVertex):
-    """
-    impl of the machine vertex so that it contains resources and can be used
-    by vertices which do not need their own bespoke machine verts.
+    """ A machine vertex that contains resources and can be used
+        by vertices which do not need their own bespoke machine vertices.
     """
 
     def __init__(self, resources, label, constraints):
