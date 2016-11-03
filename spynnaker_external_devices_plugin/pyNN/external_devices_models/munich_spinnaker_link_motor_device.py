@@ -4,15 +4,12 @@ from spynnaker.pyNN.models.abstract_models\
     .abstract_vertex_with_dependent_vertices import \
     AbstractVertexWithEdgeToDependentVertices
 
-# external devices plugin
-from spynnaker_external_devices_plugin.pyNN.impl_classes.\
-    external_devices_machine_vertex import \
-    ExternalDevicesMachineVertex
-
 # pacman imports
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
+from pacman.model.graphs.machine.impl.simple_machine_vertex \
+    import SimpleMachineVertex
 from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
     import ApplicationSpiNNakerLinkVertex
 from pacman.model.graphs.application.impl.application_vertex \
@@ -100,7 +97,7 @@ class MunichMotorDevice(
     @overrides(ApplicationVertex.create_machine_vertex)
     def create_machine_vertex(self, vertex_slice, resources_required,
                               label=None, constraints=None):
-        return ExternalDevicesMachineVertex(
+        return SimpleMachineVertex(
             resources_required, label, constraints)
 
     @overrides(ApplicationVertex.get_resources_used_by_atoms)
