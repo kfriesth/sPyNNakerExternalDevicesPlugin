@@ -10,7 +10,7 @@ p.setup(timestep=1.0)
 
 # FPGA Retina - Down Polarity
 retina_pop = p.Population(
-    2000, external_devices.ArbitaryFPGADevice, {
+    2000, external_devices.ArbitraryFPGADevice, {
         'fpga_link_id': 12,
         'fpga_id': 1,
         'label': "bacon"},

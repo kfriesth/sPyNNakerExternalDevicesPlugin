@@ -119,16 +119,14 @@ class MunichRetinaDevice(
                            self._virtual_chip_y << 16)
 
         commands.append(MultiCastCommand(
-            0, key_set_command, self.MANAGEMENT_MASK, key_set_payload,
-            5, 1000))
+            0, key_set_command, key_set_payload, 5, 1000))
 
         # make retina enabled (dependent on if its a left or right retina
         if position == self.RIGHT_RETINA:
             enable_command = self.MANAGEMENT_BIT | self.RIGHT_RETINA_ENABLE
         else:
             enable_command = self.MANAGEMENT_BIT | self.LEFT_RETINA_ENABLE
-        commands.append(MultiCastCommand(
-            0, enable_command, self.MANAGEMENT_MASK, 1, 5, 1000))
+        commands.append(MultiCastCommand(0, enable_command, 1, 5, 1000))
 
         # disable retina
         if position == self.RIGHT_RETINA:
@@ -136,7 +134,6 @@ class MunichRetinaDevice(
         else:
             disable_command = self.MANAGEMENT_BIT | self.LEFT_RETINA_DISABLE
 
-        commands.append(MultiCastCommand(
-            -1, disable_command, self.MANAGEMENT_MASK, 0, 5, 1000))
+        commands.append(MultiCastCommand(-1, disable_command, 0, 5, 1000))
 
         return commands

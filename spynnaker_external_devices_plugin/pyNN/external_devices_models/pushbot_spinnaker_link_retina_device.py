@@ -64,7 +64,7 @@ class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
             self, fixed_key, spinnaker_link_id, label=None, n_neurons=None,
             polarity=PushBotRetinaPolarity.Merged,
             resolution=PushBotRetinaResolution.Downsample64,
-            board_address=None):
+            board_address=None, command_sender_top_bits_key=0x00000000):
 
         # Validate number of timestamp bytes
         if not isinstance(polarity, PushBotRetinaPolarity):
@@ -111,7 +111,7 @@ class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
             max_atoms_per_core=fixed_n_neurons, label=label,
             board_address=board_address)
         AbstractSendMeMulticastCommandsVertex.__init__(
-            self, self._get_commands())
+            self, self._get_commands(command_sender_top_bits_key))
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         if n_neurons != fixed_n_neurons and n_neurons is not None:
@@ -122,58 +122,46 @@ class PushBotRetinaDevice(ApplicationSpiNNakerLinkVertex,
         return [KeyAllocatorFixedKeyAndMaskConstraint(
             [BaseKeyAndMask(self._routing_key, self._routing_mask)])]
 
-    def _get_commands(self):
+    def _get_commands(self, command_top_bits_key):
         """
         method that returns the commands for the retina external device
         """
         # Set sensor key
         commands = list()
         commands.append(MultiCastCommand(
-            0, PushBotRetinaDevice.SENSOR | PushBotRetinaDevice.SENSOR_SET_KEY,
-            PushBotRetinaDevice.MANAGEMENT_MASK, self._retina_source_key,
-            1, 100))
+            0, (command_top_bits_key | PushBotRetinaDevice.SENSOR |
+                PushBotRetinaDevice.SENSOR_SET_KEY),
+            self._retina_source_key, 1, 100))
 
         # Set sensor to pushbot
         commands.append(MultiCastCommand(
-            0, (PushBotRetinaDevice.SENSOR |
-                PushBotRetinaDevice.SENSOR_SET_PUSHBOT),
-            PushBotRetinaDevice.MANAGEMENT_MASK, 1,
-            1, 100))
+            0, (command_top_bits_key | PushBotRetinaDevice.SENSOR |
+                PushBotRetinaDevice.SENSOR_SET_PUSHBOT), 1, 1, 100))
 
         # Ensure retina is disabled
         commands.append(MultiCastCommand(
-            0, PushBotRetinaDevice.RETINA_DISABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK, 0,
-            1, 100))
+            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_DISABLE),
+            0, 1, 100))
 
         # Set retina key
         commands.append(MultiCastCommand(
-            0, PushBotRetinaDevice.RETINA_KEY_SET,
-            PushBotRetinaDevice.MANAGEMENT_MASK, self._retina_source_key,
-            1, 100))
+            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_KEY_SET),
+            self._retina_source_key, 1, 100))
 
         # Enable retina
         commands.append(MultiCastCommand(
-            0, PushBotRetinaDevice.RETINA_ENABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK,
+            0, (command_top_bits_key | PushBotRetinaDevice.RETINA_ENABLE),
             (PushBotRetinaDevice.RETINA_NO_TIMESTAMP +
              self._resolution.value.enable_command),
             1, 100))
 
         # At end of simulation, disable retina
         commands.append(MultiCastCommand(
-            -1, PushBotRetinaDevice.RETINA_DISABLE,
-            PushBotRetinaDevice.MANAGEMENT_MASK, 0,
-            1, 100))
+            -1, (command_top_bits_key | PushBotRetinaDevice.RETINA_DISABLE),
+            0, 1, 100))
 
         return commands
 
     @property
     def model_name(self):
         return "pushbot retina device"
-
-    def recieves_multicast_commands(self):
-        return True
-
-    def is_virtual_vertex(self):
-        return True
