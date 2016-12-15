@@ -36,6 +36,7 @@ from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # general imports
 import logging
+from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +162,10 @@ class MunichMotorDevice(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "robot_motor_control.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
+    def get_binary_start_mode_enum(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     def reserve_memory_regions(self, spec):
         """
