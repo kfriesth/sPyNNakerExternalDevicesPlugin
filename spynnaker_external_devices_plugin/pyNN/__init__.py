@@ -165,7 +165,7 @@ def activate_live_output_to(population, device):
 
 
 def SpikeInjector(
-        n_neurons, label, port,
+        n_neurons, label, port=None,
         virtual_key=None, database_notify_host=None,
         database_notify_port_num=None, database_ack_port_num=None):
     """ Supports adding a spike injector to the application graph.

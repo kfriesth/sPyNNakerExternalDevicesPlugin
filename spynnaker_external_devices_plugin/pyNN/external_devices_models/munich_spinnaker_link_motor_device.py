@@ -4,12 +4,13 @@ import logging
 from pacman.model.constraints.key_allocator_constraints\
     .key_allocator_fixed_mask_constraint \
     import KeyAllocatorFixedMaskConstraint
+from pacman.model.graphs.machine.impl.simple_machine_vertex \
+    import SimpleMachineVertex
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.application.impl.application_spinnaker_link_vertex \
     import ApplicationSpiNNakerLinkVertex
 from pacman.model.graphs.application.impl.application_vertex \
     import ApplicationVertex
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource \
     import CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
@@ -76,7 +77,8 @@ class MunichMotorDevice(
 
         ApplicationVertex.__init__(self, label)
         VertexWithEdgeToDependentVertices.__init__(
-            self, {_MunichMotorDevice(spinnaker_link_id): [MOTOR_PARTITION_ID]})
+            self,
+            {_MunichMotorDevice(spinnaker_link_id): [MOTOR_PARTITION_ID]})
         AbstractProvidesOutgoingPartitionConstraints.__init__(self)
         ProvidesKeyToAtomMappingImpl.__init__(self)
 
@@ -95,7 +97,8 @@ class MunichMotorDevice(
     @overrides(ApplicationVertex.create_machine_vertex)
     def create_machine_vertex(self, vertex_slice, resources_required,
                               label=None, constraints=None):
-        return MachineVertex(resources_required, label, constraints)
+        return SimpleMachineVertex(
+            resources_required, label, constraints)
 
     @overrides(ApplicationVertex.get_resources_used_by_atoms)
     def get_resources_used_by_atoms(self, vertex_slice):
